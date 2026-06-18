@@ -126,7 +126,15 @@ function run(){
   const text = document.getElementById('content').value.trim();
   if(!text){ alert('اكتب محتوى أول'); return; }
   show('thinkScreen');
-  setTimeout(()=>{ render(generate(text)); show('resultScreen'); }, 1400);
+  const started = Date.now();
+  const finish = (r)=>{
+    const wait = Math.max(0, 900 - (Date.now()-started));
+    setTimeout(()=>{ render(r); show('resultScreen'); }, wait);
+  };
+  fetch("/api/generate",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({text})})
+    .then(res=>res.ok?res.json():Promise.reject(new Error("api "+res.status)))
+    .then(r=>{ if(!r||r.error) throw new Error((r&&r.error)||"empty"); finish(r); })
+    .catch(err=>{ console.warn("رجعنا للمحاكي —",err.message); finish(generate(text)); });
 }
 
 function render(r){

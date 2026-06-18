@@ -143,10 +143,27 @@
     ));
     container.scrollIntoView({behavior:"smooth", block:"center"});
 
-    setTimeout(()=>{
-      const r = engine.generate(text);
-      renderResult(r, container);
-    }, 1400);
+    // نحاول العقل الحقيقي (Claude عبر /api/generate)، وإذا فشل نرجع للمحاكي
+    const started = Date.now();
+    const finish = (r)=>{
+      const wait = Math.max(0, 900 - (Date.now()-started)); // نخلّي شاشة التشاور تبان
+      setTimeout(()=> renderResult(r, container), wait);
+    };
+
+    fetch("/api/generate", {
+      method:"POST",
+      headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ text })
+    })
+    .then(res => res.ok ? res.json() : Promise.reject(new Error("api "+res.status)))
+    .then(r => {
+      if(!r || (r.error)) throw new Error(r && r.error || "empty");
+      finish(r);
+    })
+    .catch(err => {
+      console.warn("الديوانية: رجعنا للمحاكي القواعدي —", err.message);
+      finish(engine.generate(text));
+    });
   }
 
   // ===== عرض النتيجة =====
