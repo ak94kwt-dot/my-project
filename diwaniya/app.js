@@ -119,8 +119,13 @@
 
     const btn = el("button",{class:"dw-run", onClick:()=>runAnalysis(ta.value, result)},"اعرض على الديوانية");
 
+    // مشهد الفريج الحيّ (يُركّب عبر window.Freej)
+    const scene = el("div",{id:"dwFreej"});
+    if(window.Freej && window.Freej.mount){ window.Freej.mount(scene); }
+
     return el("section",{id:"app", class:"dw-app"},
-      el("h2",{class:"dw-sec-title"},"جرّبها الآن"),
+      el("h2",{class:"dw-sec-title"},"الديوانية — شوف الفريج يتفاعل"),
+      scene,
       el("div",{class:"dw-app-card"},
         ta,
         el("div",{class:"dw-chips"}, ...chips),
@@ -134,20 +139,31 @@
   function runAnalysis(text, container){
     const engine = window.DiwaniyaEngine;
     if(!engine){ container.innerHTML = "<p style='color:"+BRAND.danger+"'>المحرّك ما تحمّل. تأكّد إن engine.js موجود.</p>"; return; }
+    if(!text || !text.trim()){ container.innerHTML = "<p style='color:"+BRAND.warn+"'>اكتب محتوى أول 🙂</p>"; return; }
 
-    // شاشة التشاور
+    // المرحلة ١: الفريج يتجمّع فوراً (قبل وصول الـAPI) حسب الرادار المحلي
+    const freej = window.Freej;
+    if(freej && engine.scanRadar){
+      const dwFreej = document.getElementById("dwFreej");
+      if(dwFreej) dwFreej.scrollIntoView({behavior:"smooth", block:"center"});
+      freej.summon(engine.scanRadar(text));
+    }
+
+    // شاشة التشاور (التفاصيل الكاملة تنزل تحت المشهد)
     container.innerHTML = "";
     container.appendChild(el("div",{class:"dw-thinking"},
       el("div",{class:"dw-think-text"},"الديوانية تتشاور…"),
       el("div",{class:"dw-dots"}, el("span",{class:"dw-dot"}), el("span",{class:"dw-dot"}), el("span",{class:"dw-dot"}))
     ));
-    container.scrollIntoView({behavior:"smooth", block:"center"});
 
     // نحاول العقل الحقيقي (Claude عبر /api/generate)، وإذا فشل نرجع للمحاكي
     const started = Date.now();
     const finish = (r)=>{
       const wait = Math.max(0, 900 - (Date.now()-started)); // نخلّي شاشة التشاور تبان
-      setTimeout(()=> renderResult(r, container), wait);
+      setTimeout(()=>{
+        if(freej && freej.react) freej.react(r);   // المشهد يحاكي الردود لايف
+        renderResult(r, container);                 // التفاصيل الكاملة تحت
+      }, wait);
     };
 
     fetch("/api/generate", {

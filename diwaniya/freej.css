@@ -1,0 +1,144 @@
+/* ============================================================
+   الفريج الحيّ — أنماط المشهد الغامر (freej.css)
+   مشهد SVG مسطّح فاخر: مبانٍ + ٢٤ شخصية تتحرّك وتتحاور.
+   كله DOM/CSS — بلا مكتبات، بلا build.
+   ============================================================ */
+
+:root{
+  --fj-gold:#B8862F; --fj-sand:#F3EEE3; --fj-teal:#0E6B54; --fj-dteal:#0A4537;
+  --fj-danger:#C0392B; --fj-safe:#1D9E75; --fj-warn:#BA7517;
+  --fj-char:#2E2A24; --fj-line:#E2DACB;
+}
+
+/* ===== المسرح ===== */
+.fj-scene{
+  position:relative; width:100%; aspect-ratio:16/11; max-height:78vh;
+  border-radius:20px; overflow:hidden; isolation:isolate;
+  background:
+    radial-gradient(120% 80% at 50% 0%, #EAF3EF 0%, #EFEADD 48%, #E7DBC6 100%);
+  border:1px solid var(--fj-line);
+  box-shadow:0 10px 40px rgba(46,42,36,.10), inset 0 2px 18px rgba(255,255,255,.5);
+  font-family:inherit; user-select:none;
+}
+/* أرضية الفريج (ساحة رملية) */
+.fj-scene::before{
+  content:""; position:absolute; left:50%; top:54%; transform:translate(-50%,-50%);
+  width:62%; height:46%; border-radius:50%;
+  background:radial-gradient(closest-side, rgba(184,134,47,.14), transparent 75%);
+  z-index:0;
+}
+
+/* ===== المباني ===== */
+.fj-building{
+  position:absolute; transform:translate(-50%,-50%); text-align:center;
+  z-index:2; transition:filter .45s ease, transform .45s ease;
+}
+.fj-building svg{ display:block; margin:0 auto; filter:drop-shadow(0 6px 8px rgba(46,42,36,.14)); }
+.fj-blabel{
+  font-size:10px; color:var(--fj-char); margin-top:3px; opacity:.6;
+  background:rgba(255,255,255,.55); border-radius:7px; padding:0 6px; display:inline-block;
+  transition:opacity .3s, font-weight .3s;
+}
+.fj-building.lit{ transform:translate(-50%,-50%) scale(1.06); }
+.fj-building.lit svg{ filter:drop-shadow(0 0 14px rgba(184,134,47,.85)) drop-shadow(0 6px 8px rgba(46,42,36,.14)); }
+.fj-building.lit .fj-blabel{ opacity:1; font-weight:700; color:var(--fj-dteal); }
+
+/* ===== الشخصيات ===== */
+.fj-ava{
+  position:absolute; transform:translate(-50%,-50%); width:48px; z-index:6;
+  transition:left .95s cubic-bezier(.45,0,.2,1), top .95s cubic-bezier(.45,0,.2,1), opacity .5s, filter .5s;
+}
+.fj-ava-inner{
+  display:flex; flex-direction:column; align-items:center;
+  animation:fjbob 3.2s ease-in-out infinite;
+}
+@keyframes fjbob{ 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
+.fj-tok{
+  width:38px; height:38px; border-radius:50%;
+  background:linear-gradient(160deg,#FCFAF4,var(--fj-sand));
+  border:2px solid var(--fj-gold); display:flex; align-items:center; justify-content:center;
+  font-size:19px; box-shadow:0 3px 7px rgba(46,42,36,.22);
+  position:relative; z-index:2; transition:transform .3s ease, box-shadow .3s ease;
+}
+.fj-shadow{
+  width:26px; height:7px; border-radius:50%;
+  background:rgba(46,42,36,.18); margin-top:-2px; filter:blur(1.5px);
+}
+.fj-name{
+  font-size:9px; color:var(--fj-char); margin-top:3px;
+  background:rgba(255,255,255,.78); padding:0 5px; border-radius:7px;
+  white-space:nowrap; opacity:.85;
+}
+/* الطيف السلبي على الأطراف */
+.fj-ava.dark .fj-tok{
+  border-color:#473f37; background:linear-gradient(160deg,#3a3530,#2E2A24);
+  box-shadow:0 0 10px rgba(192,57,43,.55);
+}
+.fj-ava.dark .fj-name{ color:#7a7066; }
+/* أثناء الكلام */
+.fj-ava.speaking{ z-index:30; }
+.fj-ava.speaking .fj-tok{ transform:scale(1.2); box-shadow:0 6px 16px rgba(46,42,36,.32); }
+.fj-ava.dimmed{ opacity:.38; filter:grayscale(.35); }
+
+/* ===== فقاعات الكلام ===== */
+.fj-bubble{
+  position:absolute; bottom:46px; left:50%;
+  transform:translateX(-50%) scale(0); transform-origin:bottom center;
+  width:158px; max-width:44vw; background:#fff; border:1.5px solid var(--fj-line);
+  border-radius:13px; padding:7px 10px; font-size:11px; line-height:1.55; color:var(--fj-char);
+  box-shadow:0 8px 20px rgba(46,42,36,.18); z-index:28; pointer-events:none; text-align:right;
+  opacity:0; transition:transform .4s cubic-bezier(.34,1.56,.64,1), opacity .3s;
+}
+.fj-bubble.show{ transform:translateX(-50%) scale(1); opacity:1; }
+.fj-bubble::after{
+  content:""; position:absolute; bottom:-7px; left:50%; transform:translateX(-50%);
+  border:7px solid transparent; border-top-color:#fff;
+}
+.fj-bubble .fj-bname{ font-weight:700; font-size:9.5px; display:block; margin-bottom:2px; color:var(--fj-teal); }
+.fj-bubble.crit{ border-color:#E8C5C0; }
+.fj-bubble.crit .fj-bname{ color:var(--fj-danger); }
+.fj-bubble.sup{ border-color:#C5E5D8; }
+.fj-bubble.sup .fj-bname{ color:var(--fj-safe); }
+
+/* ===== توست التشاور ===== */
+.fj-toast{
+  position:absolute; top:10px; left:50%; transform:translateX(-50%) translateY(-6px);
+  background:rgba(14,107,84,.92); color:#fff; font-size:11.5px; font-weight:600;
+  padding:5px 14px; border-radius:20px; z-index:34; opacity:0;
+  transition:opacity .35s, transform .35s; pointer-events:none; display:flex; align-items:center; gap:7px;
+}
+.fj-toast.show{ opacity:1; transform:translateX(-50%) translateY(0); }
+.fj-toast .fj-dot{ width:6px; height:6px; border-radius:50%; background:#fff; animation:fjpulse 1.1s infinite; }
+.fj-toast .fj-dot:nth-child(2){ animation-delay:.18s; }
+.fj-toast .fj-dot:nth-child(3){ animation-delay:.36s; }
+@keyframes fjpulse{ 0%,80%,100%{opacity:.3;transform:scale(.8)} 40%{opacity:1;transform:scale(1.1)} }
+
+/* ===== هالة الحكم (vignette) ===== */
+.fj-vignette{ position:absolute; inset:0; z-index:18; pointer-events:none;
+  box-shadow:inset 0 0 0 rgba(0,0,0,0); transition:box-shadow .7s ease; }
+
+/* ===== شريط الحكم (HUD) ===== */
+.fj-hud{
+  position:absolute; left:50%; bottom:12px; transform:translateX(-50%) translateY(150%);
+  width:92%; max-width:540px; background:rgba(255,255,255,.93);
+  -webkit-backdrop-filter:blur(7px); backdrop-filter:blur(7px);
+  border:1px solid var(--fj-line); border-radius:15px; padding:11px 15px;
+  display:flex; align-items:center; gap:13px; z-index:32;
+  box-shadow:0 10px 30px rgba(46,42,36,.22); transition:transform .55s cubic-bezier(.34,1.4,.64,1);
+}
+.fj-hud.show{ transform:translateX(-50%) translateY(0); }
+.fj-hud-v{ font-size:16px; font-weight:800; padding:7px 13px; border-radius:11px; color:#fff; white-space:nowrap; }
+.fj-hud-meta{ font-size:11.5px; color:var(--fj-char); flex:1; line-height:1.6; }
+.fj-hud-meta b{ color:var(--fj-dteal); }
+.fj-hud-split{ display:flex; height:8px; border-radius:5px; overflow:hidden; margin-top:5px; border:1px solid var(--fj-line); }
+.fj-hud-split i{ display:block; height:100%; }
+
+/* ===== موبايل ===== */
+@media(max-width:600px){
+  .fj-scene{ aspect-ratio:9/12; max-height:none; }
+  .fj-ava{ width:40px; }
+  .fj-tok{ width:32px; height:32px; font-size:16px; }
+  .fj-name{ font-size:8px; }
+  .fj-bubble{ width:130px; font-size:10px; }
+  .fj-building svg{ transform:scale(.82); }
+}
