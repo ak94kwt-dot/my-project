@@ -40,6 +40,16 @@
   }
   function reset(){ try{ localStorage.removeItem(KEY); }catch(e){} return blank(); }
 
+  // ===== حارس المواضيع الحسّاسة =====
+  // أي إجابة حرّة تلمس سياسة/دين/صحّة عميقة تُعلَّم حسّاسة:
+  // تبقى محفوظة محلياً للمستخدم، لكن لا تُرسل أبداً للسيرفر
+  // ولا تُبنى عليها أنماط (خصوصية + ابتعاد عن المجالات الممنوعة).
+  function isSensitive(txt){
+    const B = Q.BLOCKED_TOPICS || [];
+    const s = String(txt);
+    return B.some(w => s.indexOf(w) >= 0);
+  }
+
   // ===== الإجابات =====
   function addAnswer(qid, q, a){
     const p = get();
@@ -47,15 +57,17 @@
     if(!txt) return p;
     // نحدّث لو نفس السؤال موجود، وإلا نضيف
     const i = p.answers.findIndex(x=>x.qid===qid);
-    const rec = { qid, q, a:txt, ts:Date.now() };
+    const rec = { qid, q, a:txt, ts:Date.now(), sensitive:isSensitive(txt) };
     if(i>=0) p.answers[i] = rec; else p.answers.push(rec);
     p.lastAsk = Date.now();
     // streak: يوم جديد فيه إجابة = +1
     const day = 86400000;
-    const lastDay = Math.floor((p._lastDay||0)/day);
-    const today = Math.floor(Date.now()/day);
-    if(today>lastDay){ p.streak = (today-lastDay===1)?(p.streak+1):1; p._lastDay = Date.now(); }
     if(!p._lastDay){ p._lastDay = Date.now(); p.streak = 1; }
+    else {
+      const lastDay = Math.floor(p._lastDay/day);
+      const today = Math.floor(Date.now()/day);
+      if(today>lastDay){ p.streak = (today-lastDay===1)?(p.streak+1):1; p._lastDay = Date.now(); }
+    }
     return save(p);
   }
   function answeredCount(){ return get().answers.length; }
@@ -80,7 +92,7 @@
   // ===== استخلاص محلي بسيط (بلا API) =====
   function localInsights(){
     const p = get();
-    const a = p.answers;
+    const a = p.answers.filter(x=>!x.sensitive);   // نتجاهل الحسّاس
     if(a.length < 2){
       return { traits:[], summary:"جاوب على كم سؤال خفيف وراح أبدأ أتعرّف على نمطك 👀", tips:[] };
     }
@@ -106,13 +118,14 @@
   // ===== استخلاص عبر الذكاء الاصطناعي (مع fallback) =====
   function insights(){
     const p = get();
-    if(p.answers.length < 2){
+    const safe = p.answers.filter(x=>!x.sensitive);   // لا نرسل الحسّاس للسيرفر
+    if(safe.length < 2){
       return Promise.resolve(localInsights());
     }
     return fetch("/api/profile-insights", {
       method:"POST",
       headers:{ "Content-Type":"application/json" },
-      body: JSON.stringify({ answers: p.answers.map(x=>({ q:x.q, a:x.a })) })
+      body: JSON.stringify({ answers: safe.map(x=>({ q:x.q, a:x.a })) })
     })
     .then(r=> r.ok ? r.json() : Promise.reject(new Error("api "+r.status)))
     .then(r=>{

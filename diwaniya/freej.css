@@ -12,7 +12,7 @@
 
 /* ===== المسرح ===== */
 .fj-scene{
-  position:relative; width:100%; aspect-ratio:16/11; max-height:78vh;
+  position:relative; width:100%; aspect-ratio:16/10; max-height:86vh; min-height:460px;
   border-radius:20px; overflow:hidden; isolation:isolate;
   background:
     radial-gradient(120% 80% at 50% 0%, #EAF3EF 0%, #EFEADD 48%, #E7DBC6 100%);
