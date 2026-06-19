@@ -138,10 +138,42 @@
   function clearTimers(){ timers.forEach(clearTimeout); timers=[]; }
   function later(fn,ms){ var t=setTimeout(fn,ms); timers.push(t); return t; }
 
+  // ===== طبقة الخريطة (شوارع + ساحة + مسطّحات خضراء + ماء) =====
+  function mapBaseSVG(){
+    var land="#EFE9DB", road="#E4D7BD", roadc="#F4ECDA", plaza="#F4EEE0", ring="#DFD1B4",
+        park="#CFE0BE", water="#B9D8D0", blk="#E9E0CD";
+    var spokes='<path d="M80 55 L80 11"/>'+
+               '<path d="M80 55 Q58 40 34 25"/>'+
+               '<path d="M80 55 Q108 40 129 24"/>'+
+               '<path d="M80 55 Q55 71 34 81"/>'+
+               '<path d="M80 55 Q106 71 126 81"/>'+
+               '<path d="M34 25 Q80 6 129 24"/>';
+    return ''+
+    '<svg viewBox="0 0 160 100" preserveAspectRatio="none" width="100%" height="100%">'+
+      '<rect width="160" height="100" fill="'+land+'"/>'+
+      '<ellipse cx="27" cy="17" rx="24" ry="14" fill="'+park+'" opacity=".5"/>'+
+      '<ellipse cx="147" cy="93" rx="20" ry="12" fill="'+park+'" opacity=".4"/>'+
+      '<path d="M0 100 Q22 84 10 68 Q3 60 0 62 Z" fill="'+water+'" opacity=".55"/>'+
+      '<g fill="'+blk+'" opacity=".5">'+
+        '<rect x="6" y="40" width="14" height="10" rx="3"/>'+
+        '<rect x="140" y="45" width="14" height="11" rx="3"/>'+
+        '<rect x="117" y="61" width="12" height="9" rx="3"/>'+
+        '<rect x="45" y="61" width="12" height="9" rx="3"/>'+
+      '</g>'+
+      '<g fill="none" stroke="'+road+'" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round">'+spokes+'</g>'+
+      '<g fill="none" stroke="'+roadc+'" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="0.1 5">'+spokes+'</g>'+
+      '<circle cx="80" cy="55" r="16" fill="'+plaza+'" stroke="'+ring+'" stroke-width="2"/>'+
+      '<circle cx="80" cy="55" r="5.5" fill="'+park+'" opacity=".7"/>'+
+    '</svg>';
+  }
+
   // ===== التركيب =====
   function mount(host){
     if(!host) return;
     scene = host; scene.className="fj-scene"; scene.innerHTML="";
+
+    var basemap = el("div",{class:"fj-basemap"}); basemap.innerHTML = mapBaseSVG();
+    scene.appendChild(basemap);
 
     vignette = el("div",{class:"fj-vignette"}); scene.appendChild(vignette);
 
