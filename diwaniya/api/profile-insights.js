@@ -67,7 +67,7 @@ module.exports = async function handler(req, res) {
 
   let body = req.body;
   if (typeof body === "string") { try { body = JSON.parse(body); } catch (_) { body = {}; } }
-  const answers = (body && Array.isArray(body.answers)) ? body.answers : [];
+  const answers = ((body && Array.isArray(body.answers)) ? body.answers : []).slice(0, 100);
   if (answers.length < 2) {
     res.status(200).json({ insufficient: true, message: "محتاج إجابات أكثر شوي عشان أتعرّف على نمطك." });
     return;
@@ -95,8 +95,8 @@ module.exports = async function handler(req, res) {
     });
 
     if (!r.ok) {
-      const detail = await r.text().catch(() => "");
-      res.status(502).json({ error: "anthropic_error", status: r.status, detail: detail.slice(0, 300) });
+      await r.text().catch(() => "");
+      res.status(502).json({ error: "upstream_error" });
       return;
     }
 
@@ -113,7 +113,7 @@ module.exports = async function handler(req, res) {
       return;
     }
     res.status(200).json(result);
-  } catch (e) {
-    res.status(502).json({ error: "exception", message: String(e && e.message || e) });
+  } catch (_e) {
+    res.status(502).json({ error: "exception" });
   }
 };

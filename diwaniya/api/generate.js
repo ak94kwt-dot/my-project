@@ -157,7 +157,7 @@ module.exports = async function handler(req, res) {
 
   let body = req.body;
   if (typeof body === "string") { try { body = JSON.parse(body); } catch (_) { body = {}; } }
-  const text = (body && body.text ? String(body.text) : "").trim();
+  const text = (body && body.text ? String(body.text) : "").trim().slice(0, 5000);
   if (text.length < 8) {
     res.status(200).json({ insufficient: true, message: "اكتب محتوى أوضح وأطول شوي عشان الديوانية تقدّر تحكم." });
     return;
@@ -181,8 +181,8 @@ module.exports = async function handler(req, res) {
     });
 
     if (!r.ok) {
-      const detail = await r.text().catch(() => "");
-      res.status(502).json({ error: "anthropic_error", status: r.status, detail: detail.slice(0, 300) });
+      await r.text().catch(() => "");
+      res.status(502).json({ error: "upstream_error" });
       return;
     }
 
@@ -199,7 +199,7 @@ module.exports = async function handler(req, res) {
       return;
     }
     res.status(200).json(result);
-  } catch (e) {
-    res.status(502).json({ error: "exception", message: String(e && e.message || e) });
+  } catch (_e) {
+    res.status(502).json({ error: "exception" });
   }
 };

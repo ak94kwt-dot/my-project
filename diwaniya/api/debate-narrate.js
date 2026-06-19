@@ -47,15 +47,15 @@ module.exports = async function handler(req, res) {
       })
     });
     if (!r.ok) {
-      const detail = await r.text().catch(() => "");
-      res.status(502).json({ error: "anthropic_error", status: r.status, detail: detail.slice(0, 200) });
+      await r.text().catch(() => "");
+      res.status(502).json({ error: "upstream_error" });
       return;
     }
     const data = await r.json();
     const text = (data.content || []).filter(b => b.type === "text").map(b => b.text).join("").trim();
     if (!text) { res.status(502).json({ error: "empty" }); return; }
     res.status(200).json({ text: text.slice(0, 600) });
-  } catch (e) {
-    res.status(502).json({ error: "exception", message: String(e && e.message || e) });
+  } catch (_e) {
+    res.status(502).json({ error: "exception" });
   }
 };
