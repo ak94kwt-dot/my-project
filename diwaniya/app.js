@@ -245,6 +245,9 @@
     }
     container.appendChild(radarRow);
 
+    // تحليل النقاش (منو أثّر على منو ومنو غيّر رأيه)
+    if(r.analysis){ renderAnalysis(r.analysis, container); }
+
     // أصوات الديوانية
     container.appendChild(el("div",{class:"dw-voices-title"},"أصوات الديوانية"));
     const voices = el("div",{class:"dw-voices"});
@@ -268,6 +271,48 @@
 
     // الثقة
     container.appendChild(el("div",{class:"dw-conf"}, "مستوى ثقة الديوانية بهالتوقّع: "+r.confidence));
+  }
+
+  // ===== لوحة تحليل النقاش =====
+  function renderAnalysis(an, container){
+    const panel = el("div",{class:"dw-analysis"});
+    panel.appendChild(el("div",{class:"dw-an-h"},"🔎 تحليل النقاش"));
+
+    // استنتاج عام (يُثرى بالذكاء الاصطناعي إن توفّر «المفتاح»)
+    const sum = el("div",{class:"dw-an-sum"}, an.summary && an.summary.overall || "");
+    panel.appendChild(sum);
+
+    // منو تواجه منو
+    if(an.pairs && an.pairs.length){
+      panel.appendChild(el("div",{class:"dw-an-sub"},"منو تواجه منو"));
+      const pw = el("div",{class:"dw-an-pairs"});
+      an.pairs.forEach(pr=> pw.appendChild(el("span",{class:"dw-an-pair"}, pr.join(" ↔ "))));
+      panel.appendChild(pw);
+    }
+
+    // وش صار لكل واحد
+    panel.appendChild(el("div",{class:"dw-an-sub"},"وش صار لكل واحد"));
+    const list = el("div",{class:"dw-an-people"});
+    (an.people||[]).forEach(pp=>{
+      list.appendChild(el("div",{class:"dw-an-person"+(pp.changed?(" "+pp.direction):"")},
+        el("span",{class:"dw-an-em"}, pp.emoji),
+        el("div",{class:"dw-an-body"},
+          el("span",{class:"dw-an-nm"}, pp.name),
+          el("span",{class:"dw-an-line"}, pp.line)
+        )
+      ));
+    });
+    panel.appendChild(list);
+    container.appendChild(panel);
+
+    // إثراء السرد بالذكاء الاصطناعي (اختياري — يرجع للمحلي لو ما فيه مفتاح)
+    fetch("/api/debate-narrate", {
+      method:"POST", headers:{ "Content-Type":"application/json" },
+      body: JSON.stringify({ analysis: an })
+    })
+    .then(x=> x.ok ? x.json() : Promise.reject(new Error("n/a")))
+    .then(j=>{ if(j && j.text){ sum.textContent = j.text; sum.classList.add("ai"); } })
+    .catch(()=>{});
   }
 
   // ===== المستشار الشخصي (الصفحة الرئيسية الجديدة) =====

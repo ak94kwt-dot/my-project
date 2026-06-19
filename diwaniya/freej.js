@@ -279,30 +279,33 @@
     ids.forEach(function(id){ if(rxById[id].persona && rxById[id].persona.dark) darkSet[id]=1; });
 
     // مزاج أوّلي لكل شخصية (الأغلب يبدأ مرتاح/محايد، الطيف السلبي معصّب)
-    var moods = ids.map(function(id){ return seedMood(rxById[id], baseRisk); });
+    var seed = ids.map(function(id){ return seedMood(rxById[id], baseRisk); });
+
+    // نحاكي كل الجولات مرّة وحدة ونسجّل «منو سحب منو» (provenance)
+    var sim = simulate(ids, seed, darkSet);
 
     var START=650, ROUND_MS=1050;
 
     // إظهار الوجوه الأولية
     later(function(){
       showToast(false);
-      ids.forEach(function(id,i){ applyMood(id, moods[i], true); });
+      ids.forEach(function(id,i){ applyMood(id, sim.frames[0][i], true); });
     }, START);
 
-    // جولات النقاش — العدوى تنتشر
+    // جولات النقاش — العدوى تنتشر (نعرض الإطارات المحسوبة مسبقاً)
     for(var rnd=1; rnd<=ROUNDS; rnd++){
-      (function(){
+      (function(fr){
         later(function(){
-          moods = step(ids, moods, darkSet);
-          ids.forEach(function(id,i){ applyMood(id, moods[i], true); });
-        }, START + rnd*ROUND_MS);
-      })();
+          ids.forEach(function(id,i){ applyMood(id, sim.frames[fr][i], true); });
+        }, START + fr*ROUND_MS);
+      })(rnd);
     }
 
-    // الحكم بعد ما يخلص النقاش — متأثّر بالمزاج الجماعي النهائي
+    // الحكم + التحليل بعد ما يخلص النقاش
     var endAt = START + (ROUNDS+1)*ROUND_MS + 200;
     later(function(){
-      var adjusted = computeAdjusted(result, moods);
+      var adjusted = computeAdjusted(result, sim.finalMoods);
+      adjusted.analysis = buildAnalysis(ids, seed, sim, darkSet);
       showVerdict(adjusted);
       if(onComplete) onComplete(adjusted);
     }, endAt);
@@ -320,18 +323,73 @@
     return clampN(base + (Math.random()*0.6-0.3), -2, 2);
   }
 
-  // جولة عدوى: كل وجه يتأثّر بجيرانه — العصب يعدّي أسرع، والطيف السلبي يصعّد
-  function step(ids, moods, darkSet){
-    var n=ids.length, avg=mean(moods);
-    return ids.map(function(id,i){
-      var a=moods[(i-1+n)%n], b=moods[(i+1)%n], neigh=(a+b)/2;
-      var w = neigh<0 ? 0.55 : 0.38;                 // العصب ينتقل أسرع من الهدوء
-      var m = moods[i]*(1-w) + neigh*w;
-      if(darkSet[ids[(i-1+n)%n]] || darkSet[ids[(i+1)%n]]) m -= 0.40;  // جار متصيّد = استفزاز
-      m += (avg<0 ? avg*0.12 : avg*0.05);            // حرارة الغرفة العامة
-      if(darkSet[id]) m = Math.min(m, -0.85) - 0.05; // المتصيّد يبقى مولّع
-      return clampN(m, -2, 2);
+  // محاكاة كل الجولات + تتبّع منو أثّر على منو
+  // العصب يعدّي أسرع، والطيف السلبي يصعّد جيرانه
+  function simulate(ids, seed, darkSet){
+    var n=ids.length, moods=seed.slice();
+    var frames=[moods.slice()];
+    var infl=ids.map(function(){ return {}; });   // i -> { influencerId: weight }
+    for(var r=0;r<ROUNDS;r++){
+      var avg=mean(moods), next=[];
+      for(var i=0;i<n;i++){
+        var li=(i-1+n)%n, ri=(i+1)%n;
+        var a=moods[li], b=moods[ri], neigh=(a+b)/2, before=moods[i];
+        var w = neigh<0 ? 0.55 : 0.38;
+        var m = before*(1-w) + neigh*w;
+        var darkN = darkSet[ids[li]] ? ids[li] : (darkSet[ids[ri]] ? ids[ri] : null);
+        if(darkSet[ids[li]] || darkSet[ids[ri]]) m -= 0.40;
+        m += (avg<0 ? avg*0.12 : avg*0.05);
+        if(darkSet[ids[i]]) m = Math.min(m, -0.85) - 0.05;
+        m = clampN(m, -2, 2);
+        next.push(m);
+        var delta = m - before;
+        if(Math.abs(delta) > 0.05){
+          var cand = (delta<0 && darkN) ? darkN
+                   : (Math.abs(a-before) >= Math.abs(b-before) ? ids[li] : ids[ri]);
+          infl[i][cand] = (infl[i][cand]||0) + Math.abs(delta);
+        }
+      }
+      moods=next; frames.push(moods.slice());
+    }
+    return { frames:frames, infl:infl, finalMoods:moods };
+  }
+
+  // بناء تقرير التحليل: منو تواجه منو · وش صار لكل واحد · منو أثّر · استنتاجات
+  function buildAnalysis(ids, seed, sim, darkSet){
+    var nameOf=function(id){ return (byId[id]&&byId[id].name)||id; };
+    var emojiOf=function(id){ return (byId[id]&&byId[id].emoji)||"💬"; };
+    var fin=sim.finalMoods;
+    var pairs=[];
+    for(var k=0;k<ids.length;k+=2){
+      var pr=ids.slice(k,k+2).map(nameOf); if(pr.length) pairs.push(pr);
+    }
+    var people=[], changedCount=0, angered=0, calmed=0, inflTally={};
+    ids.forEach(function(id,i){
+      var s=seed[i], f=fin[i], d=f-s;
+      var changed = (s>0.2 && f<-0.2) || (s<-0.2 && f>0.2) || Math.abs(d)>=1.0;
+      var dir = changed ? (d<0 ? "angered" : "calmed") : "steady";
+      var inf=sim.infl[i], topId=null, topW=0;
+      Object.keys(inf).forEach(function(cid){ if(inf[cid]>topW){ topW=inf[cid]; topId=cid; } });
+      var infName = topId ? nameOf(topId) : null;
+      var viaDark = topId ? !!darkSet[topId] : false;
+      if(changed){ changedCount++; if(dir==="angered") angered++; else calmed++;
+        if(topId) inflTally[topId]=(inflTally[topId]||0)+1; }
+      var line;
+      if(dir==="angered") line = "بدأ "+faceFor(s)+" ← انعصب "+faceFor(f)+(infName?("، أثّر عليه "+infName+(viaDark?" (متصيّد)":"")):"");
+      else if(dir==="calmed") line = "بدأ "+faceFor(s)+" ← هدأ "+faceFor(f)+(infName?("، طمّنه "+infName):"");
+      else line = "ثابت على موقفه "+faceFor(f);
+      people.push({ id:id, name:nameOf(id), emoji:emojiOf(id), changed:changed,
+        direction:dir, influencer:infName, viaDark:viaDark, line:line });
     });
+    var topInf=null, tw=0;
+    Object.keys(inflTally).forEach(function(cid){ if(inflTally[cid]>tw){ tw=inflTally[cid]; topInf=cid; } });
+    var g=mean(fin);
+    var mood = g<=-0.4 ? "اشتعل" : g>=0.4 ? "هدأ" : "بقي متوازن";
+    var overall = "النقاش "+mood+": "+changedCount+" غيّروا رأيهم ("+angered+" انعصبوا، "+calmed+" هدّوا)"+
+                  (topInf?("، وأكثر تأثير كان لـ"+nameOf(topInf)):"")+".";
+    return { pairs:pairs, people:people,
+      summary:{ changedCount:changedCount, angered:angered, calmed:calmed,
+                topInfluencer: topInf?nameOf(topInf):null, overall:overall } };
   }
 
   // الحكم النهائي متأثّر بالنقاش (دراما عالية — يقدر يقلب الكفّة)
