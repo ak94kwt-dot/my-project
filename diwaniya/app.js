@@ -260,6 +260,131 @@
     container.appendChild(el("div",{class:"dw-conf"}, "مستوى ثقة الديوانية بهالتوقّع: "+r.confidence));
   }
 
+  // ===== المستشار الشخصي (الصفحة الرئيسية الجديدة) =====
+  let _prefCat = null;
+
+  function buildAdvisor(){
+    const Q = window.DiwaniyaQuestions;
+    const cats = el("div",{class:"av-cats"});
+    (Q ? Q.CATEGORIES : []).forEach(c=>{
+      cats.appendChild(el("div",{class:"av-cat", "data-cat":c.key, onClick:()=>selectCat(c.key)},
+        el("span",{class:"av-cat-em"}, c.emoji), c.label));
+    });
+    const side = el("aside",{class:"av-side"},
+      el("div",{class:"av-side-h"},"الأقسام"),
+      cats,
+      el("div",{class:"av-side-tools"},
+        el("button",{class:"av-tool-btn", onClick:()=>scrollToApp()},"🛠️ أدوات: شوف الفريج يتفاعل"))
+    );
+    const main = el("div",{class:"av-main"}, el("div",{id:"avAsk"}), el("div",{id:"avProfile"}));
+    const wrap = el("section",{id:"advisor", class:"av-wrap"}, side, main);
+    setTimeout(()=>{ renderAsk(); refreshProfile(); }, 0);
+    return wrap;
+  }
+
+  function selectCat(key){
+    _prefCat = (_prefCat===key) ? null : key;
+    document.querySelectorAll(".av-cat").forEach(n=>
+      n.classList.toggle("active", n.getAttribute("data-cat")===_prefCat));
+    renderAsk();
+  }
+
+  function renderAsk(){
+    const P = window.Profile, Q = window.DiwaniyaQuestions;
+    const host = document.getElementById("avAsk");
+    if(!host || !P) return;
+    let q = P.nextQuestion();
+    if(_prefCat && Q){
+      const answered = new Set(P.get().answers.map(a=>a.qid));
+      const inCat = Q.QUESTIONS.filter(x=>x.cat===_prefCat && !answered.has(x.qid));
+      const pool = inCat.length ? inCat : Q.QUESTIONS.filter(x=>x.cat===_prefCat);
+      if(pool.length) q = pool[Math.floor(Math.random()*pool.length)];
+    }
+    host.innerHTML = "";
+    if(!q){ host.appendChild(el("div",{class:"av-ask"},
+      el("div",{class:"av-ask-q"},"خلّصت أسئلة اليوم 🌙 ارجع بكرة ونكمّل.")));
+      return; }
+    const card = el("div",{class:"av-ask"});
+    card.appendChild(el("div",{class:"av-ask-kicker"},"سؤال اليوم · يبني ملفك الخاص"));
+    card.appendChild(el("div",{class:"av-ask-q"}, q.text));
+    if(q.kind==="chips" && q.chips){
+      const chips = el("div",{class:"av-chips"});
+      q.chips.forEach(c=> chips.appendChild(
+        el("span",{class:"av-chip", onClick:()=>handleAnswer(q, c)}, c)));
+      card.appendChild(chips);
+    }
+    const inp = el("input",{class:"av-ask-input", placeholder:"أو اكتب جوابك بكلماتك…"});
+    const send = el("button",{class:"av-ask-send",
+      onClick:()=>{ if(inp.value.trim()) handleAnswer(q, inp.value); }},"إرسال");
+    inp.addEventListener("keydown",(e)=>{ if(e.key==="Enter" && inp.value.trim()) handleAnswer(q, inp.value); });
+    card.appendChild(el("div",{class:"av-ask-free"}, inp, send));
+    card.appendChild(el("button",{class:"av-ask-skip", onClick:()=>renderAsk()},"سؤال ثاني ↻"));
+    host.appendChild(card);
+  }
+
+  function handleAnswer(q, a){
+    if(!window.Profile) return;
+    window.Profile.addAnswer(q.qid, q.text, a);
+    renderAsk();
+    refreshProfile();
+  }
+
+  function renderInsightsInto(host, ins){
+    if(ins.summary) host.appendChild(el("div",{class:"av-pf-sum"}, ins.summary));
+    (ins.traits||[]).forEach(t=>{
+      host.appendChild(el("div",{class:"av-trait"},
+        el("div",{class:"av-trait-top"}, el("span",{}, t.label), el("span",{}, (t.strength||0)+"%")),
+        el("div",{class:"av-trait-bar"}, el("div",{class:"av-trait-fill", style:{width:(t.strength||0)+"%"}}))
+      ));
+    });
+    if(ins.tips && ins.tips.length){
+      const tips = el("div",{class:"av-tips"}, el("div",{class:"av-tips-h"},"💡 نصايح تناسبك"));
+      ins.tips.forEach(t=> tips.appendChild(
+        el("div",{class:"av-tip"}, el("span",{class:"av-tip-em"},"◆"), t)));
+      host.appendChild(tips);
+    }
+  }
+
+  function refreshProfile(){
+    const P = window.Profile;
+    const host = document.getElementById("avProfile");
+    if(!host || !P) return;
+    const p = P.get();
+    host.innerHTML = "";
+    const card = el("div",{class:"av-profile"});
+    card.appendChild(el("div",{class:"av-pf-top"},
+      el("div",{class:"av-pf-h"},"🧠 ملفّك الشخصي"),
+      el("div",{class:"av-pf-lock"},"🔒 خاص — لا يُنشر")
+    ));
+    if(p.answers.length){
+      card.appendChild(el("div",{class:"av-pf-streak"},
+        "🔥 "+p.streak+" يوم · "+p.answers.length+" إجابة"));
+    }
+    const body = el("div",{id:"avPfBody"});
+    if(!p.answers.length){
+      body.appendChild(el("div",{class:"av-pf-empty"},
+        "جاوب على سؤال اليوم وراح أبدأ أكوّن صورة عنك 👀"));
+    } else {
+      renderInsightsInto(body, P.localInsights());
+      if(p.answers.length>=2){
+        body.appendChild(el("div",{class:"av-loading", id:"avLoad"},"المستشار يحلّل نمطك بدقّة أعلى…"));
+      }
+    }
+    card.appendChild(body);
+    if(p.answers.length){
+      card.appendChild(el("button",{class:"av-pf-reset",
+        onClick:()=>{ if(confirm("تصفّر ملفك الخاص نهائياً؟")){ P.reset(); renderAsk(); refreshProfile(); } }},
+        "تصفير الملف"));
+    }
+    host.appendChild(card);
+    if(p.answers.length>=2){
+      P.insights().then(ins=>{
+        const b = document.getElementById("avPfBody");
+        if(b){ b.innerHTML=""; renderInsightsInto(b, ins); }
+      });
+    }
+  }
+
   // ===== الفوتر =====
   function buildFooter(){
     return el("footer",{class:"dw-footer"},
@@ -280,10 +405,11 @@
     const root = document.getElementById("dw-root");
     if(!root){ console.error("ما لقيت #dw-root"); return; }
     root.appendChild(buildHeader());
+    root.appendChild(buildAdvisor());   // المستشار الشخصي = الرئيسية الجديدة
     root.appendChild(buildHero());
     root.appendChild(buildHow());
     root.appendChild(buildFeatures());
-    root.appendChild(buildApp());
+    root.appendChild(buildApp());       // أداة الفريج (تُفتح من زر الأدوات)
     root.appendChild(buildFooter());
   }
 
