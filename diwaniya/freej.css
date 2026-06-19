@@ -80,6 +80,23 @@
 .fj-ava.speaking .fj-tok{ transform:scale(1.2); box-shadow:0 6px 16px rgba(46,42,36,.32); }
 .fj-ava.dimmed{ opacity:.38; filter:grayscale(.35); }
 
+/* ===== الوجوه + المزاج (النقاش الحيّ) ===== */
+.fj-face{
+  position:absolute; top:-19px; left:50%; transform:translateX(-50%) scale(0);
+  font-size:22px; line-height:1; z-index:14; pointer-events:none;
+  transition:transform .35s cubic-bezier(.34,1.56,.64,1);
+  filter:drop-shadow(0 2px 3px rgba(46,42,36,.25));
+}
+.fj-face:not(:empty){ transform:translateX(-50%) scale(1); }
+.fj-ava.m-angry .fj-tok{ border-color:var(--fj-danger); box-shadow:0 0 13px rgba(192,57,43,.6); }
+.fj-ava.m-happy .fj-tok{ border-color:var(--fj-safe); box-shadow:0 0 13px rgba(29,158,117,.5); }
+.fj-ava.m-neu   .fj-tok{ border-color:var(--fj-gold); }
+.fj-ava.fj-react.m-angry .fj-tok{ animation:fjshake .42s; }
+.fj-ava.fj-react.m-happy .fj-tok{ animation:fjhop .42s; }
+@keyframes fjshake{ 0%,100%{transform:translateX(0)} 20%{transform:translateX(-3px) rotate(-6deg)}
+  40%{transform:translateX(3px) rotate(6deg)} 60%{transform:translateX(-2px)} 80%{transform:translateX(2px)} }
+@keyframes fjhop{ 0%,100%{transform:translateY(0)} 40%{transform:translateY(-6px) scale(1.08)} }
+
 /* ===== فقاعات الكلام ===== */
 .fj-bubble{
   position:absolute; bottom:46px; left:50%;
@@ -140,5 +157,6 @@
   .fj-tok{ width:32px; height:32px; font-size:16px; }
   .fj-name{ font-size:8px; }
   .fj-bubble{ width:130px; font-size:10px; }
+  .fj-face{ font-size:18px; top:-16px; }
   .fj-building svg{ transform:scale(.82); }
 }

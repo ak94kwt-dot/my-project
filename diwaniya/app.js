@@ -161,8 +161,11 @@
     const finish = (r)=>{
       const wait = Math.max(0, 900 - (Date.now()-started)); // نخلّي شاشة التشاور تبان
       setTimeout(()=>{
-        if(freej && freej.react) freej.react(r);   // المشهد يحاكي الردود لايف
-        renderResult(r, container);                 // التفاصيل الكاملة تحت
+        renderResult(r, container);                 // عرض مبدئي (قبل النقاش)
+        if(freej && freej.react){
+          // المشهد يشغّل النقاش الحيّ، وعند انتهائه يرجّع حكماً متأثّراً بالنقاش
+          freej.react(r, function(adjusted){ if(adjusted) renderResult(adjusted, container); });
+        }
       }, wait);
     };
 
@@ -200,6 +203,13 @@
       el("div",{class:"dw-verdict-v"}, r.verdict),
       el("div",{class:"dw-verdict-r"}, "احتمال الأزمة: "+r.risk+"%")
     ));
+
+    // أثر النقاش الحيّ على الحكم (إن وُجد)
+    if(r.debate){
+      container.appendChild(el("div",{style:{textAlign:"center", fontSize:"12px",
+        color:BRAND.mute, margin:"-4px 0 14px"}},
+        "بدأ "+r.debate.before+"٪ ← بعد نقاش الفريج "+r.debate.after+"٪ · "+r.debate.reason));
+    }
 
     // المؤشّران
     const safeColor = r.safety>=7?BRAND.safe : r.safety>=4?BRAND.warn : BRAND.danger;

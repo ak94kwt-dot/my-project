@@ -158,6 +158,7 @@
         style:{ left:pos[0]+"%", top:pos[1]+"%", animationDelay:(Math.random()*2.5).toFixed(2)+"s" }});
       var inner = el("div",{class:"fj-ava-inner"});
       inner.style.animationDelay = (Math.random()*3).toFixed(2)+"s";
+      inner.appendChild(el("div",{class:"fj-face"}));
       inner.appendChild(el("div",{class:"fj-tok"}, p.emoji||"💬"));
       inner.appendChild(el("div",{class:"fj-shadow"}));
       inner.appendChild(el("div",{class:"fj-name"}, p.name));
@@ -243,48 +244,149 @@
     showToast(true);
   }
 
-  // ===== المرحلة ٣+٤: REACTIONS ثم VERDICT (عند وصول النتيجة) =====
-  function react(result){
-    if(!mounted){ return; }
-    if(!result){ showToast(false); return; }
+  // ===== المرحلة ٣+٤: نقاش حيّ + عدوى مزاجية ثم حكم متأثّر بالنقاش =====
+  var ROUNDS = 4;
+
+  function react(result, onComplete){
+    if(!mounted){ if(onComplete) onComplete(result); return; }
+    if(!result){ showToast(false); if(onComplete) onComplete(result); return; }
 
     // مدخل غير كافٍ: جاسم وحده يعلّق
     if(result.insufficient){
       showToast(false); homeAll();
       later(function(){ bubble("jasim", "اكتب محتوى أوضح عشان نقدر نحكم 😐", "neu"); }, 350);
+      if(onComplete) onComplete(result);
       return;
     }
 
     var reactions = result.reactions || [];
     // طابق الأسماء بالـ id الحقيقي من النتيجة
-    var ids=[], used={};
+    var ids=[], used={}, rxById={};
     reactions.forEach(function(rx){
       var nm = rx.persona && rx.persona.name;
       var p = nm && byName[nm];
       var id = p ? p.id : null;
-      if(id && !used[id]){ used[id]=1; ids.push(id); }
+      if(id && !used[id]){ used[id]=1; ids.push(id); rxById[id]=rx; }
     });
-    if(!ids.length){ showToast(false); return; }
+    if(!ids.length){ showToast(false); if(onComplete) onComplete(result); return; }
 
-    // أعد التجميع على الطاقم الحقيقي
-    gather(ids);
+    // يتلاقون ثنائيات ويتواجهون
+    gatherPairs(ids);
     showToast(true);
 
-    // فقاعات تتابعية
-    var STEP=950, START=650;
-    reactions.forEach(function(rx, i){
-      var nm = rx.persona && rx.persona.name;
-      var p = nm && byName[nm]; if(!p) return;
-      var tone = (rx.persona && rx.persona.dark) ? "crit" : "neu";
-      later(function(){
-        if(i===0) showToast(false);
-        bubble(p.id, (rx.text||""), tone, nm);
-      }, START + i*STEP);
-    });
+    var baseRisk = (result.risk!=null ? result.risk : 35);
+    var darkSet={};
+    ids.forEach(function(id){ if(rxById[id].persona && rxById[id].persona.dark) darkSet[id]=1; });
 
-    // الحكم بعد آخر فقاعة
-    var verdictAt = START + reactions.length*STEP + 500;
-    later(function(){ showVerdict(result); }, verdictAt);
+    // مزاج أوّلي لكل شخصية (الأغلب يبدأ مرتاح/محايد، الطيف السلبي معصّب)
+    var moods = ids.map(function(id){ return seedMood(rxById[id], baseRisk); });
+
+    var START=650, ROUND_MS=1050;
+
+    // إظهار الوجوه الأولية
+    later(function(){
+      showToast(false);
+      ids.forEach(function(id,i){ applyMood(id, moods[i], true); });
+    }, START);
+
+    // جولات النقاش — العدوى تنتشر
+    for(var rnd=1; rnd<=ROUNDS; rnd++){
+      (function(){
+        later(function(){
+          moods = step(ids, moods, darkSet);
+          ids.forEach(function(id,i){ applyMood(id, moods[i], true); });
+        }, START + rnd*ROUND_MS);
+      })();
+    }
+
+    // الحكم بعد ما يخلص النقاش — متأثّر بالمزاج الجماعي النهائي
+    var endAt = START + (ROUNDS+1)*ROUND_MS + 200;
+    later(function(){
+      var adjusted = computeAdjusted(result, moods);
+      showVerdict(adjusted);
+      if(onComplete) onComplete(adjusted);
+    }, endAt);
+  }
+
+  // ===== نموذج المزاج والعدوى =====
+  function clampN(v,lo,hi){ return v<lo?lo:(v>hi?hi:v); }
+  function mean(a){ var s=0; a.forEach(function(x){s+=x;}); return a.length?s/a.length:0; }
+
+  // مزاج أوّلي: السلبي معصّب، الباقي يبدأ مرتاح/محايد حسب خطورة المحتوى
+  function seedMood(rx, baseRisk){
+    var dark = rx.persona && rx.persona.dark;
+    if(dark) return clampN(-1.3 + (Math.random()*0.4-0.2), -2, 2);
+    var base = baseRisk>=55 ? -0.2 : baseRisk>=25 ? 0.45 : 0.95;
+    return clampN(base + (Math.random()*0.6-0.3), -2, 2);
+  }
+
+  // جولة عدوى: كل وجه يتأثّر بجيرانه — العصب يعدّي أسرع، والطيف السلبي يصعّد
+  function step(ids, moods, darkSet){
+    var n=ids.length, avg=mean(moods);
+    return ids.map(function(id,i){
+      var a=moods[(i-1+n)%n], b=moods[(i+1)%n], neigh=(a+b)/2;
+      var w = neigh<0 ? 0.55 : 0.38;                 // العصب ينتقل أسرع من الهدوء
+      var m = moods[i]*(1-w) + neigh*w;
+      if(darkSet[ids[(i-1+n)%n]] || darkSet[ids[(i+1)%n]]) m -= 0.40;  // جار متصيّد = استفزاز
+      m += (avg<0 ? avg*0.12 : avg*0.05);            // حرارة الغرفة العامة
+      if(darkSet[id]) m = Math.min(m, -0.85) - 0.05; // المتصيّد يبقى مولّع
+      return clampN(m, -2, 2);
+    });
+  }
+
+  // الحكم النهائي متأثّر بالنقاش (دراما عالية — يقدر يقلب الكفّة)
+  function computeAdjusted(result, moods){
+    var g = mean(moods);
+    var base = (result.risk!=null ? result.risk : 35);
+    var delta = Math.round(-g * 24);                 // حتى ±~48٪
+    var after = Math.round(clampN(base + delta, 2, 98));
+    var t = tier(after);
+    var crit=0, sup=0;
+    moods.forEach(function(m){ if(m<=-0.3) crit++; else if(m>=0.5) sup++; });
+    var total=moods.length||1;
+    var critP=Math.round(crit/total*100), supP=Math.round(sup/total*100);
+    var neuP=Math.max(0, 100-critP-supP);
+    var reason = delta>=5  ? ("🔥 العصب انتشر بالنقاش +"+delta+"٪") :
+                 delta<=-5 ? ("🌿 هدّوا بعض "+delta+"٪") :
+                             "النقاش ما غيّر الكفّة كثير";
+    var adj={}; for(var k in result){ if(result.hasOwnProperty(k)) adj[k]=result[k]; }
+    adj.risk=after; adj.verdict=t.verdict; adj.color=t.color;
+    adj.split={crit:critP, neu:neuP, sup:supP};
+    adj.debate={ before:base, after:after, delta:delta, reason:reason };
+    return adj;
+  }
+  function tier(risk){
+    if(risk>=55) return {verdict:"🔴 خطر — لا تنشر", color:DANGER};
+    if(risk>=25) return {verdict:"🟡 عدّل قبل النشر", color:WARN};
+    return {verdict:"🟢 انشر بثقة", color:SAFE};
+  }
+
+  // الوجوه
+  function faceFor(m){ return m>=1.1?"😄":m>=0.4?"🙂":m>-0.4?"😐":m>-1.1?"😠":"😡"; }
+  function moodClass(m){ return m<=-0.4?"m-angry":(m>=0.4?"m-happy":"m-neu"); }
+  function applyMood(id, m, animate){
+    var a=avaEls[id]; if(!a) return;
+    var face=a.querySelector(".fj-face"); if(face) face.textContent=faceFor(m);
+    a.classList.remove("m-angry","m-happy","m-neu"); a.classList.add(moodClass(m));
+    if(animate){ a.classList.remove("fj-react"); void a.offsetWidth; a.classList.add("fj-react"); }
+  }
+
+  // يتلاقون ثنائيات تتواجه حول الديوانية
+  function gatherPairs(ids){
+    var pairs=[]; for(var i=0;i<ids.length;i+=2){ pairs.push(ids.slice(i,i+2)); }
+    var np=pairs.length||1, rx=30, ry=20;
+    pairs.forEach(function(pair,pi){
+      var ang=(Math.PI*2)*(pi/np) - Math.PI/2;
+      var cx=CENTER[0]+rx*Math.cos(ang), cy=CENTER[1]+ry*Math.sin(ang);
+      pair.forEach(function(id,k){
+        var dx = pair.length>1 ? (k===0?-6:6) : 0;
+        moveTo(id, cx+dx, cy);
+      });
+    });
+    PERSONAS.forEach(function(p){
+      if(ids.indexOf(p.id)===-1){ var a=avaEls[p.id]; if(!a) return;
+        a.classList.add("dimmed"); var h=HOME[p.id]||[50,50]; a.style.left=h[0]+"%"; a.style.top=h[1]+"%"; }
+    });
   }
 
   // فقاعة كلام فوق شخصية
@@ -309,9 +411,16 @@
     hud.innerHTML="";
     hud.appendChild(el("div",{class:"fj-hud-v", style:{background:color}}, r.verdict||"—"));
     var meta = el("div",{class:"fj-hud-meta"});
-    meta.appendChild(el("div",{}, "احتمال الأزمة ", el("b",{}, (r.risk!=null?r.risk:"—")+"%"),
-      " · فيرال ", el("b",{}, (r.viral!=null?r.viral:"—")+"/10"),
-      " · أمان ", el("b",{}, (r.safety!=null?r.safety:"—")+"/10")));
+    if(r.debate){
+      meta.appendChild(el("div",{}, "بدأ ", el("b",{}, r.debate.before+"٪"),
+        " ← بعد النقاش ", el("b",{}, r.debate.after+"٪"), " · ", r.debate.reason));
+      meta.appendChild(el("div",{}, "فيرال ", el("b",{}, (r.viral!=null?r.viral:"—")+"/10"),
+        " · أمان ", el("b",{}, (r.safety!=null?r.safety:"—")+"/10")));
+    } else {
+      meta.appendChild(el("div",{}, "احتمال الأزمة ", el("b",{}, (r.risk!=null?r.risk:"—")+"%"),
+        " · فيرال ", el("b",{}, (r.viral!=null?r.viral:"—")+"/10"),
+        " · أمان ", el("b",{}, (r.safety!=null?r.safety:"—")+"/10")));
+    }
     var split = el("div",{class:"fj-hud-split"});
     split.appendChild(el("i",{style:{width:sp.crit+"%", background:DANGER}}));
     split.appendChild(el("i",{style:{width:sp.neu+"%", background:"#9C9488"}}));
@@ -336,7 +445,11 @@
     if(vignette){ vignette.style.boxShadow="inset 0 0 0 rgba(0,0,0,0)"; }
     unlightBuildings();
     showToast(false);
-    PERSONAS.forEach(function(p){ var a=avaEls[p.id]; if(a) a.classList.remove("speaking"); });
+    PERSONAS.forEach(function(p){
+      var a=avaEls[p.id]; if(!a) return;
+      a.classList.remove("speaking","m-angry","m-happy","m-neu","fj-react");
+      var f=a.querySelector(".fj-face"); if(f) f.textContent="";
+    });
     if(!soft){ homeAll(); }
   }
 
