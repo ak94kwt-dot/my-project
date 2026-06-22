@@ -16,9 +16,9 @@ const ROSTER = PERSONAS
   .map(p => `- ${p.name} ${p.emoji} [${p.group}] — هَمّه: ${p.dim} | لهجته/طابعه: ${p.tone}${p.dark ? " | (طيف سلبي — يظهر بس لو استُفزّ فعلاً)" : ""}`)
   .join("\n");
 
-const SYSTEM_PROMPT = `أنت "محرّك الديوانية" — محاكي اجتماعي خليجي عالي الدقّة. مهمتك: اقرأ محتوى قبل نشره وتوقّع ردة فعل ٢٤ شخصية كويتية/خليجية حقيقية الطابع، بدقّة تقارب ٩٠٪ من الواقع، بلا قوالب جاهزة وبلا تكرار.
+const SYSTEM_PROMPT = `أنت "محرّك ناقشنا" — محاكي اجتماعي خليجي عالي الدقّة. مهمتك: اقرأ محتوى قبل نشره وتوقّع ردة فعل ٢٤ شخصية كويتية/خليجية حقيقية الطابع، بدقّة تقارب ٩٠٪ من الواقع، بلا قوالب جاهزة وبلا تكرار.
 
-# طاقم الديوانية — كل شخصية لها كاريزما وصوت مختلف تماماً
+# طاقم ناقشنا — كل شخصية لها كاريزما وصوت مختلف تماماً
 ${ROSTER}
 
 # الهدف الأهم: لا تكرار، لا قوالب
@@ -104,7 +104,7 @@ function normalize(raw, text) {
     const known = BY_NAME[r.name] || {};
     return {
       persona: {
-        name: r.name || "صوت من الديوانية",
+        name: r.name || "صوت من ناقشنا",
         emoji: r.emoji || known.emoji || "💬",
         dim: r.dim || known.dim || "",
         dark: typeof r.dark === "boolean" ? r.dark : !!known.dark
@@ -159,7 +159,7 @@ module.exports = async function handler(req, res) {
   if (typeof body === "string") { try { body = JSON.parse(body); } catch (_) { body = {}; } }
   const text = (body && body.text ? String(body.text) : "").trim().slice(0, 5000);
   if (text.length < 8) {
-    res.status(200).json({ insufficient: true, message: "اكتب محتوى أوضح وأطول شوي عشان الديوانية تقدّر تحكم." });
+    res.status(200).json({ insufficient: true, message: "اكتب محتوى أوضح وأطول شوي عشان ناقشنا يقدّرون يحكمون." });
     return;
   }
 
@@ -176,7 +176,7 @@ module.exports = async function handler(req, res) {
         max_tokens: 3000,
         temperature: 1,
         system: [{ type: "text", text: SYSTEM_PROMPT, cache_control: { type: "ephemeral" } }],
-        messages: [{ role: "user", content: "حلّل هذا المحتوى وتوقّع ردة فعل الديوانية عليه:\n«" + text + "»" }]
+        messages: [{ role: "user", content: "حلّل هذا المحتوى وتوقّع ردة فعل ناقشنا عليه:\n«" + text + "»" }]
       })
     });
 

@@ -1,5 +1,5 @@
 /* ============================================================
-   الديوانية — موقع كامل بصيغة JavaScript (app.js)
+   ناقشنا — موقع كامل بصيغة JavaScript (app.js)
    ------------------------------------------------------------
    ملف واحد يبني الموقع كامل: صفحة هبوط + تطبيق التوقّع.
    يشتغل مع index-full.html (الموجود بنفس المجلّد).
@@ -35,7 +35,7 @@
 
   const STEPS = [
     { n:"١", t:"اكتب محتواك", d:"فكرة، تغريدة، سكربت فيديو" },
-    { n:"٢", t:"الديوانية تتشاور", d:"٢٤ شخصية تتفاعل لايف" },
+    { n:"٢", t:"ناقشنا يتشاورون", d:"٢٤ شخصية تتفاعل لايف" },
     { n:"٣", t:"حكم + تعديل", d:"تعرف ردة الفعل قبل النشر" }
   ];
 
@@ -55,7 +55,7 @@
   // ===== الهيدر =====
   function buildHeader(){
     return el("header",{class:"dw-header"},
-      el("div",{class:"dw-logo"}, "الديوانية ", el("span",{class:"dw-shield"},"🛡️")),
+      el("div",{class:"dw-logo"}, "ناقشنا ", el("span",{class:"dw-shield"},"🛡️")),
       el("nav",{class:"dw-nav"},
         el("a",{href:"#how", class:"dw-navlink"},"كيف تشتغل"),
         el("a",{href:"#features", class:"dw-navlink"},"المميّزات"),
@@ -70,7 +70,7 @@
       el("div",{class:"dw-hero-badge"},"🇰🇼 صناعة كويتية"),
       el("h1",{class:"dw-hero-title"},"اعرف ردة فعل جمهورك", el("br"), "قبل لا تنشر"),
       el("p",{class:"dw-hero-sub"},"أول منصة عربية تتوقّع نجاح المحتوى وتحذّر من أزماته. تدخل محتواك، يتفاعل معه مجتمع خليجي مُحاكى، وتطلع لك ردة الفعل المتوقّعة — كل هذا قبل النشر."),
-      el("button",{class:"dw-cta-lg", onClick:()=>scrollToApp()},"جرّب الديوانية مجاناً"),
+      el("button",{class:"dw-cta-lg", onClick:()=>scrollToApp()},"جرّب ناقشنا مجاناً"),
       el("p",{class:"dw-hero-note"},"«ما نوقفك… نخلّيك أذكى»")
     );
   }
@@ -84,7 +84,7 @@
       )
     );
     return el("section",{id:"how", class:"dw-section"},
-      el("h2",{class:"dw-sec-title"},"كيف تشتغل الديوانية"),
+      el("h2",{class:"dw-sec-title"},"كيف يشتغل ناقشنا"),
       el("div",{class:"dw-steps"}, ...cards)
     );
   }
@@ -98,7 +98,7 @@
       )
     );
     return el("section",{id:"features", class:"dw-section dw-section-alt"},
-      el("h2",{class:"dw-sec-title"},"ليش الديوانية"),
+      el("h2",{class:"dw-sec-title"},"ليش ناقشنا"),
       el("div",{class:"dw-features"}, ...cards)
     );
   }
@@ -117,14 +117,14 @@
     );
     const result = el("div",{class:"dw-result", id:"dwResult"});
 
-    const btn = el("button",{class:"dw-run", onClick:()=>runAnalysis(ta.value, result)},"اعرض على الديوانية");
+    const btn = el("button",{class:"dw-run", onClick:()=>runAnalysis(ta.value, result)},"اعرض على ناقشنا");
 
     // مشهد الفريج الحيّ (يُركّب عبر window.Freej)
     const scene = el("div",{id:"dwFreej"});
     if(window.Freej && window.Freej.mount){ window.Freej.mount(scene); }
 
     return el("section",{id:"app", class:"dw-app"},
-      el("h2",{class:"dw-sec-title"},"الديوانية — شوف الفريج يتفاعل"),
+      el("h2",{class:"dw-sec-title"},"ناقشنا — شوف الفريج يتفاعل"),
       scene,
       el("div",{class:"dw-app-card"},
         ta,
@@ -152,7 +152,7 @@
     // شاشة التشاور (التفاصيل الكاملة تنزل تحت المشهد)
     container.innerHTML = "";
     container.appendChild(el("div",{class:"dw-thinking"},
-      el("div",{class:"dw-think-text"},"الديوانية تتشاور…"),
+      el("div",{class:"dw-think-text"},"ناقشنا يتشاورون…"),
       el("div",{class:"dw-dots"}, el("span",{class:"dw-dot"}), el("span",{class:"dw-dot"}), el("span",{class:"dw-dot"}))
     ));
 
@@ -180,7 +180,7 @@
       finish(r);
     })
     .catch(err => {
-      console.warn("الديوانية: رجعنا للمحاكي القواعدي —", err.message);
+      console.warn("ناقشنا: رجعنا للمحاكي القواعدي —", err.message);
       finish(engine.generate(text));
     });
   }
@@ -248,8 +248,8 @@
     // تحليل النقاش (منو أثّر على منو ومنو غيّر رأيه)
     if(r.analysis){ renderAnalysis(r.analysis, container); }
 
-    // أصوات الديوانية
-    container.appendChild(el("div",{class:"dw-voices-title"},"أصوات الديوانية"));
+    // أصوات ناقشنا
+    container.appendChild(el("div",{class:"dw-voices-title"},"أصوات ناقشنا"));
     const voices = el("div",{class:"dw-voices"});
     r.reactions.forEach(x=>{
       voices.appendChild(el("div",{class:"dw-voice"},
@@ -270,7 +270,7 @@
     ));
 
     // الثقة
-    container.appendChild(el("div",{class:"dw-conf"}, "مستوى ثقة الديوانية بهالتوقّع: "+r.confidence));
+    container.appendChild(el("div",{class:"dw-conf"}, "مستوى ثقة ناقشنا بهالتوقّع: "+r.confidence));
   }
 
   // ===== لوحة تحليل النقاش =====
@@ -443,7 +443,7 @@
   // ===== الفوتر =====
   function buildFooter(){
     return el("footer",{class:"dw-footer"},
-      el("div",{class:"dw-footer-logo"},"الديوانية 🛡️"),
+      el("div",{class:"dw-footer-logo"},"ناقشنا 🛡️"),
       el("div",{class:"dw-footer-tag"},"اعرف ردة فعل جمهورك… قبل لا تنشر"),
       el("div",{class:"dw-footer-note"},"نموذج تجريبي — التوقّع احتمالي لا يقيني · صناعة كويتية 🇰🇼")
     );

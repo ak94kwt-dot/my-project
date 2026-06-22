@@ -200,7 +200,7 @@
     });
 
     toast = el("div",{class:"fj-toast"},
-      el("span",{},"الديوانية تتشاور"),
+      el("span",{},"ناقشنا يتشاورون"),
       el("span",{class:"fj-dot"}), el("span",{class:"fj-dot"}), el("span",{class:"fj-dot"}));
     scene.appendChild(toast);
 
