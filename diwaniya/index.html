@@ -32,9 +32,12 @@
   .dw-header{display:flex;justify-content:space-between;align-items:center;
     padding:14px clamp(20px,6%,64px);background:rgba(255,255,255,.72);
     -webkit-backdrop-filter:saturate(180%) blur(12px);backdrop-filter:saturate(180%) blur(12px);
-    position:sticky;top:0;z-index:50;border-bottom:1px solid var(--line);}
+    position:sticky;top:0;z-index:50;border-bottom:1px solid var(--line);
+    transform:translateZ(0);}
   .dw-logo{font-size:19px;font-weight:700;color:var(--ink);letter-spacing:-.01em;
-    background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
+    background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+    transition:transform .2s;text-shadow:0 0 30px rgba(14,107,84,.12);}
+  .dw-logo:hover{transform:scale(1.03) translateZ(2px);}
   .dw-shield{-webkit-text-fill-color:initial;}
   .dw-nav{display:flex;align-items:center;gap:6px;}
   .dw-navlink{color:var(--mute);text-decoration:none;font-size:13.5px;transition:.15s;padding:8px 12px;border-radius:8px;}
@@ -43,28 +46,38 @@
     padding:9px 18px;font-family:inherit;font-size:13px;font-weight:600;cursor:pointer;transition:.18s;}
   .dw-cta-sm:hover{transform:translateY(-1px);box-shadow:0 6px 16px rgba(10,10,10,.18);}
 
-  /* الهيرو */
+  /* الهيرو — 3D perspective depth */
   .dw-hero{background:var(--bg);color:var(--ink);text-align:center;
-    padding:clamp(56px,9vw,110px) clamp(20px,6%,64px) clamp(48px,7vw,88px);position:relative;overflow:hidden;}
+    padding:clamp(56px,9vw,110px) clamp(20px,6%,64px) clamp(48px,7vw,88px);position:relative;overflow:hidden;
+    perspective:1200px;transform-style:preserve-3d;}
   .dw-hero::before{content:"";position:absolute;inset:-40% 0 auto 0;height:560px;z-index:0;pointer-events:none;
-    background:radial-gradient(60% 60% at 50% 0%, rgba(47,158,118,.14) 0%, rgba(184,134,47,.08) 40%, transparent 72%);}
+    background:radial-gradient(60% 60% at 50% 0%, rgba(47,158,118,.14) 0%, rgba(184,134,47,.08) 40%, transparent 72%);
+    transform:translateZ(-60px) scale(1.15);transform-style:preserve-3d;}
   .dw-hero::after{content:"";position:absolute;inset:0;z-index:0;pointer-events:none;opacity:.5;
     background-image:linear-gradient(var(--line) 1px,transparent 1px),linear-gradient(90deg,var(--line) 1px,transparent 1px);
     background-size:46px 46px;-webkit-mask-image:radial-gradient(70% 55% at 50% 0%,#000,transparent 75%);
-    mask-image:radial-gradient(70% 55% at 50% 0%,#000,transparent 75%);}
+    mask-image:radial-gradient(70% 55% at 50% 0%,#000,transparent 75%);
+    transform:translateZ(-30px) scale(1.06);transform-style:preserve-3d;}
   .dw-hero>*{position:relative;z-index:1;}
   .dw-hero-badge{display:inline-flex;align-items:center;gap:7px;background:var(--bg);color:var(--mute);
     border:1px solid var(--line2);border-radius:999px;padding:6px 14px;font-size:12px;font-weight:500;
-    margin-bottom:24px;box-shadow:var(--shadow);}
+    margin-bottom:24px;box-shadow:var(--shadow);
+    transform:translateZ(20px);transition:transform .25s;}
   .dw-hero-badge::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--safe);
-    box-shadow:0 0 0 3px rgba(29,158,117,.18);}
+    box-shadow:0 0 0 3px rgba(29,158,117,.18),0 0 12px rgba(29,158,117,.3);animation:dw3dpulse 2s infinite;}
+  @keyframes dw3dpulse{0%,100%{box-shadow:0 0 0 3px rgba(29,158,117,.18),0 0 12px rgba(29,158,117,.3)}
+    50%{box-shadow:0 0 0 6px rgba(29,158,117,.08),0 0 24px rgba(29,158,117,.15)}}
   .dw-hero-title{font-size:clamp(34px,6.2vw,62px);font-weight:700;line-height:1.08;
-    letter-spacing:-.025em;margin-bottom:20px;color:var(--ink);}
-  .dw-hero-sub{font-size:clamp(15px,2vw,18px);color:var(--mute);max-width:600px;margin:0 auto 30px;line-height:1.6;}
+    letter-spacing:-.025em;margin-bottom:20px;color:var(--ink);
+    transform:translateZ(40px);text-shadow:0 4px 24px rgba(10,10,10,.06);}
+  .dw-hero-sub{font-size:clamp(15px,2vw,18px);color:var(--mute);max-width:600px;margin:0 auto 30px;line-height:1.6;
+    transform:translateZ(25px);}
   .dw-cta-lg{background:var(--ink);color:#fff;border:none;border-radius:12px;
-    padding:14px 30px;font-family:inherit;font-size:15.5px;font-weight:600;cursor:pointer;transition:.18s;}
-  .dw-cta-lg:hover{transform:translateY(-2px);box-shadow:0 14px 30px rgba(10,10,10,.22);}
-  .dw-hero-note{margin-top:20px;font-family:var(--mono);font-size:12.5px;color:var(--mute2);letter-spacing:-.01em;}
+    padding:14px 30px;font-family:inherit;font-size:15.5px;font-weight:600;cursor:pointer;transition:.25s;
+    transform:translateZ(35px);box-shadow:0 8px 20px rgba(10,10,10,.16);}
+  .dw-cta-lg:hover{transform:translateZ(50px) translateY(-2px);box-shadow:0 18px 40px rgba(10,10,10,.25);}
+  .dw-hero-note{margin-top:20px;font-family:var(--mono);font-size:12.5px;color:var(--mute2);letter-spacing:-.01em;
+    transform:translateZ(10px);}
 
   /* الأقسام */
   .dw-section{padding:clamp(48px,7vw,84px) clamp(20px,6%,64px);max-width:1120px;margin:0 auto;}
@@ -72,30 +85,45 @@
   .dw-sec-title{font-size:clamp(24px,3.4vw,36px);font-weight:700;text-align:center;color:var(--ink);
     letter-spacing:-.025em;margin-bottom:clamp(28px,4vw,48px);}
 
-  /* الخطوات */
-  .dw-steps{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;}
+  /* الخطوات — 3D tilt cards */
+  .dw-steps{display:flex;gap:16px;flex-wrap:wrap;justify-content:center;perspective:900px;}
   .dw-step{flex:1;min-width:220px;max-width:320px;background:var(--card);border:1px solid var(--line2);
-    border-radius:18px;padding:30px 24px;text-align:center;transition:.2s;box-shadow:var(--shadow);}
-  .dw-step:hover{transform:translateY(-3px);border-color:#D6D6DA;}
+    border-radius:18px;padding:30px 24px;text-align:center;
+    transition:transform .35s ease,box-shadow .35s ease,border-color .35s ease;
+    box-shadow:var(--shadow);transform-style:preserve-3d;will-change:transform;}
+  .dw-step:hover{transform:rotateY(-4deg) rotateX(3deg) translateZ(12px) translateY(-4px);
+    border-color:#D6D6DA;box-shadow:0 20px 40px rgba(10,10,10,.10),0 4px 8px rgba(10,10,10,.06);}
+  .dw-step:nth-child(2):hover{transform:rotateX(4deg) translateZ(16px) translateY(-5px);}
+  .dw-step:nth-child(3):hover{transform:rotateY(4deg) rotateX(3deg) translateZ(12px) translateY(-4px);}
   .dw-step-num{width:46px;height:46px;border-radius:14px;background:var(--grad);color:#fff;
-    font-family:var(--mono);font-size:19px;font-weight:600;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;}
-  .dw-step-title{font-size:17px;font-weight:600;margin-bottom:6px;color:var(--ink);}
-  .dw-step-desc{font-size:13px;color:var(--mute);}
+    font-family:var(--mono);font-size:19px;font-weight:600;display:flex;align-items:center;justify-content:center;margin:0 auto 16px;
+    transform:translateZ(20px);box-shadow:0 6px 16px rgba(14,107,84,.2);}
+  .dw-step-title{font-size:17px;font-weight:600;margin-bottom:6px;color:var(--ink);transform:translateZ(10px);}
+  .dw-step-desc{font-size:13px;color:var(--mute);transform:translateZ(5px);}
 
-  /* المميّزات */
-  .dw-features{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;max-width:1040px;margin:0 auto;}
-  .dw-feature{background:var(--card);border:1px solid var(--line2);border-radius:18px;padding:26px;text-align:right;transition:.2s;}
-  .dw-feature:hover{transform:translateY(-3px);box-shadow:var(--shadow);border-color:#D6D6DA;}
+  /* المميّزات — 3D depth cards */
+  .dw-features{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:16px;max-width:1040px;margin:0 auto;perspective:1000px;}
+  .dw-feature{background:var(--card);border:1px solid var(--line2);border-radius:18px;padding:26px;text-align:right;
+    transition:transform .35s ease,box-shadow .35s ease,border-color .35s ease;
+    transform-style:preserve-3d;will-change:transform;}
+  .dw-feature:hover{transform:rotateX(4deg) rotateY(2deg) translateZ(10px) translateY(-4px);
+    box-shadow:0 20px 50px rgba(10,10,10,.10),0 4px 12px rgba(10,10,10,.05);border-color:#D6D6DA;}
+  .dw-feature:nth-child(even):hover{transform:rotateX(-3deg) rotateY(-2deg) translateZ(10px) translateY(-4px);}
   .dw-feature-icon{font-size:28px;margin-bottom:14px;display:inline-flex;width:52px;height:52px;
-    align-items:center;justify-content:center;border-radius:14px;background:var(--bg3);border:1px solid var(--line);}
-  .dw-feature-title{font-size:16px;font-weight:600;color:var(--ink);margin-bottom:7px;}
-  .dw-feature-desc{font-size:13.5px;color:var(--mute);line-height:1.6;}
+    align-items:center;justify-content:center;border-radius:14px;background:var(--bg3);border:1px solid var(--line);
+    transform:translateZ(18px);box-shadow:0 4px 12px rgba(10,10,10,.06);transition:transform .3s,box-shadow .3s;}
+  .dw-feature:hover .dw-feature-icon{transform:translateZ(28px) scale(1.06);box-shadow:0 8px 20px rgba(14,107,84,.12);}
+  .dw-feature-title{font-size:16px;font-weight:600;color:var(--ink);margin-bottom:7px;transform:translateZ(8px);}
+  .dw-feature-desc{font-size:13.5px;color:var(--mute);line-height:1.6;transform:translateZ(4px);}
 
   /* التطبيق (أداة الفريج — مساحة واسعة للأنميشن) */
   .dw-app{padding:clamp(40px,6vw,72px) clamp(20px,6%,64px);max-width:1120px;margin:0 auto;}
   #dwFreej{margin-bottom:24px;}
   .dw-app-card{background:var(--card);border:1px solid var(--line2);border-radius:18px;padding:20px;
-    max-width:680px;margin:0 auto;box-shadow:var(--shadow);}
+    max-width:680px;margin:0 auto;box-shadow:0 8px 24px rgba(10,10,10,.06),0 2px 6px rgba(10,10,10,.04);
+    transform-style:preserve-3d;transition:transform .3s,box-shadow .3s;}
+  .dw-app-card:hover{transform:translateY(-2px) rotateX(0.5deg);
+    box-shadow:0 16px 36px rgba(10,10,10,.08),0 4px 10px rgba(10,10,10,.05);}
   .dw-input{width:100%;border:1px solid var(--line2);border-radius:12px;padding:14px;
     font-family:inherit;font-size:14.5px;resize:vertical;min-height:104px;color:var(--ink);background:var(--bg);transition:.15s;}
   .dw-input::placeholder{color:var(--mute2);}
@@ -105,8 +133,11 @@
     font-size:12px;cursor:pointer;transition:.15s;color:var(--mute);}
   .dw-chip:hover{background:var(--ink);color:#fff;border-color:var(--ink);}
   .dw-run{width:100%;background:var(--ink);color:#fff;border:none;border-radius:12px;
-    padding:15px;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;margin-top:14px;transition:.18s;}
-  .dw-run:hover{transform:translateY(-1px);box-shadow:0 10px 24px rgba(10,10,10,.2);}
+    padding:15px;font-family:inherit;font-size:15px;font-weight:600;cursor:pointer;margin-top:14px;
+    transition:transform .25s,box-shadow .25s;
+    box-shadow:0 4px 12px rgba(10,10,10,.14);position:relative;overflow:hidden;}
+  .dw-run::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.08) 0%,transparent 60%);pointer-events:none;}
+  .dw-run:hover{transform:translateY(-2px) scale(1.01);box-shadow:0 14px 30px rgba(10,10,10,.22);}
 
   /* التشاور */
   .dw-result{margin:24px auto 0;max-width:680px;}
@@ -118,10 +149,13 @@
   .dw-dot:nth-child(3){animation-delay:.4s;}
   @keyframes dwb{0%,80%,100%{opacity:.25;transform:scale(.85);}40%{opacity:1;transform:scale(1.1);}}
 
-  /* النتيجة */
-  .dw-verdict{text-align:center;padding:20px;border-radius:16px;margin-bottom:14px;color:#fff;}
-  .dw-verdict-v{font-size:25px;font-weight:700;letter-spacing:-.02em;}
-  .dw-verdict-r{font-size:13px;opacity:.92;margin-top:4px;font-family:var(--mono);}
+  /* النتيجة — 3D verdict */
+  .dw-verdict{text-align:center;padding:20px;border-radius:16px;margin-bottom:14px;color:#fff;
+    transform-style:preserve-3d;perspective:600px;
+    box-shadow:0 12px 32px rgba(0,0,0,.18);position:relative;overflow:hidden;}
+  .dw-verdict::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,rgba(255,255,255,.15) 0%,transparent 50%);pointer-events:none;border-radius:inherit;}
+  .dw-verdict-v{font-size:25px;font-weight:700;letter-spacing:-.02em;transform:translateZ(16px);text-shadow:0 2px 8px rgba(0,0,0,.2);}
+  .dw-verdict-r{font-size:13px;opacity:.92;margin-top:4px;font-family:var(--mono);transform:translateZ(8px);}
   .dw-dials{display:flex;gap:10px;margin-bottom:14px;}
   .dw-dial{flex:1;background:var(--card);border:1px solid var(--line2);border-radius:14px;padding:16px;text-align:center;}
   .dw-dial-lbl{font-size:11px;color:var(--mute);}
@@ -148,8 +182,12 @@
   .dw-edit-t{font-size:13px;color:var(--mute);}
   .dw-conf{text-align:center;font-size:11px;color:var(--mute2);margin-top:14px;font-family:var(--mono);}
 
-  /* لوحة تحليل النقاش */
-  .dw-analysis{background:var(--card);border:1px solid var(--line2);border-radius:18px;padding:18px;margin:14px 0;box-shadow:var(--shadow);}
+  /* لوحة تحليل النقاش — 3D panel */
+  .dw-analysis{background:var(--card);border:1px solid var(--line2);border-radius:18px;padding:18px;margin:14px 0;
+    box-shadow:0 12px 32px rgba(10,10,10,.06),0 2px 6px rgba(10,10,10,.04);
+    transform-style:preserve-3d;transition:transform .3s,box-shadow .3s;}
+  .dw-analysis:hover{transform:translateY(-2px) rotateX(1deg);
+    box-shadow:0 18px 40px rgba(10,10,10,.08),0 4px 10px rgba(10,10,10,.05);}
   .dw-an-h{font-size:15px;font-weight:700;color:var(--ink);margin-bottom:10px;letter-spacing:-.01em;}
   .dw-an-sum{font-size:13.5px;color:var(--ink2);line-height:1.7;background:var(--bg2);border-radius:12px;
     padding:12px 14px;border-right:3px solid var(--gold);}
@@ -168,12 +206,16 @@
   .dw-an-nm{font-size:13px;font-weight:600;color:var(--ink);}
   .dw-an-line{font-size:12.5px;color:var(--mute);line-height:1.6;}
 
-  /* الفوتر */
-  .dw-footer{background:var(--ink);color:#fff;text-align:center;padding:54px clamp(20px,6%,64px);margin-top:30px;}
+  /* الفوتر — 3D layered */
+  .dw-footer{background:var(--ink);color:#fff;text-align:center;padding:54px clamp(20px,6%,64px);margin-top:30px;
+    position:relative;overflow:hidden;}
+  .dw-footer::before{content:"";position:absolute;inset:0;
+    background:linear-gradient(180deg,rgba(255,255,255,.03) 0%,transparent 30%,rgba(14,107,84,.05) 100%);pointer-events:none;}
   .dw-footer-logo{font-size:20px;font-weight:700;margin-bottom:10px;
-    background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;}
-  .dw-footer-tag{font-size:14px;color:#A1A1AA;margin-bottom:16px;}
-  .dw-footer-note{font-size:11.5px;color:#71717A;font-family:var(--mono);}
+    background:var(--grad);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent;
+    position:relative;filter:drop-shadow(0 2px 8px rgba(14,107,84,.3));}
+  .dw-footer-tag{font-size:14px;color:#A1A1AA;margin-bottom:16px;position:relative;}
+  .dw-footer-note{font-size:11.5px;color:#71717A;font-family:var(--mono);position:relative;}
 
   /* موبايل */
   @media(max-width:600px){

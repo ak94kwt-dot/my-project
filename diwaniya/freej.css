@@ -10,56 +10,76 @@
   --fj-char:#2E2A24; --fj-line:#E2DACB;
 }
 
-/* ===== المسرح ===== */
+/* ===== المسرح — 3D perspective scene ===== */
 .fj-scene{
   position:relative; width:100%; aspect-ratio:16/10; max-height:86vh; min-height:460px;
   border-radius:22px; overflow:hidden; isolation:isolate;
   background:#EFE9DB;
   border:1px solid var(--fj-line);
-  box-shadow:0 18px 50px rgba(46,42,36,.14), inset 0 1px 0 rgba(255,255,255,.6);
+  box-shadow:0 24px 60px rgba(46,42,36,.18), 0 6px 16px rgba(46,42,36,.08), inset 0 1px 0 rgba(255,255,255,.6);
   font-family:inherit; user-select:none;
+  perspective:1400px; transform-style:preserve-3d;
+  transition:transform .4s ease;
 }
-/* طبقة الخريطة (شوارع/ساحة/مسطّحات) */
-.fj-basemap{ position:absolute; inset:0; z-index:0; pointer-events:none; }
+.fj-scene:hover{
+  transform:rotateX(1.5deg) rotateY(-0.5deg);
+  box-shadow:0 30px 70px rgba(46,42,36,.22), 0 8px 20px rgba(46,42,36,.10), inset 0 1px 0 rgba(255,255,255,.6);
+}
+/* طبقة الخريطة (شوارع/ساحة/مسطّحات) — خلفية 3D */
+.fj-basemap{ position:absolute; inset:0; z-index:0; pointer-events:none; transform:translateZ(-20px) scale(1.04); }
 .fj-basemap svg{ display:block; width:100%; height:100%; }
 /* ظلّ حوافّ ناعم يعطي عمق الخريطة */
 .fj-scene::before{
   content:""; position:absolute; inset:0; z-index:1; pointer-events:none;
   box-shadow:inset 0 0 80px rgba(46,42,36,.07);
+  transform:translateZ(5px);
+}
+/* طبقة ضوء عليا تعطي عمق */
+.fj-scene::after{
+  content:""; position:absolute; inset:0; z-index:2; pointer-events:none;
+  background:linear-gradient(170deg,rgba(255,255,255,.12) 0%,transparent 40%,rgba(46,42,36,.04) 100%);
+  transform:translateZ(10px);
 }
 
-/* ===== المباني ===== */
+/* ===== المباني — 3D elevated ===== */
 .fj-building{
-  position:absolute; transform:translate(-50%,-50%); text-align:center;
+  position:absolute; transform:translate(-50%,-50%) translateZ(10px); text-align:center;
   z-index:2; transition:filter .45s ease, transform .45s ease;
+  transform-style:preserve-3d;
 }
-.fj-building svg{ display:block; margin:0 auto; filter:drop-shadow(0 6px 8px rgba(46,42,36,.14)); }
+.fj-building svg{ display:block; margin:0 auto; filter:drop-shadow(0 8px 12px rgba(46,42,36,.18));
+  transition:filter .4s,transform .4s; transform:translateZ(5px); }
 .fj-blabel{
   font-size:9.5px; font-weight:500; color:var(--fj-char); margin-top:5px; opacity:.72;
   background:rgba(255,255,255,.88); border-radius:999px; padding:1px 9px; display:inline-block;
-  box-shadow:0 1px 2px rgba(46,42,36,.08); transition:opacity .3s, font-weight .3s;
+  box-shadow:0 2px 4px rgba(46,42,36,.1); transition:opacity .3s, font-weight .3s;
+  transform:translateZ(8px);
 }
-.fj-building.lit{ transform:translate(-50%,-50%) scale(1.06); }
-.fj-building.lit svg{ filter:drop-shadow(0 0 14px rgba(184,134,47,.85)) drop-shadow(0 6px 8px rgba(46,42,36,.14)); }
+.fj-building.lit{ transform:translate(-50%,-50%) translateZ(18px) scale(1.08); }
+.fj-building.lit svg{ filter:drop-shadow(0 0 18px rgba(184,134,47,.85)) drop-shadow(0 8px 12px rgba(46,42,36,.18));
+  transform:translateZ(12px); }
 .fj-building.lit .fj-blabel{ opacity:1; font-weight:700; color:var(--fj-dteal); }
 
-/* ===== الشخصيات ===== */
+/* ===== الشخصيات — 3D elevated pins ===== */
 .fj-ava{
   position:absolute; transform:translate(-50%,-50%); width:48px; z-index:6;
   transition:left .95s cubic-bezier(.45,0,.2,1), top .95s cubic-bezier(.45,0,.2,1), opacity .5s, filter .5s;
+  transform-style:preserve-3d;
 }
 .fj-ava-inner{
   display:flex; flex-direction:column; align-items:center;
   animation:fjbob 3.2s ease-in-out infinite;
+  transform-style:preserve-3d;
 }
-@keyframes fjbob{ 0%,100%{transform:translateY(0)} 50%{transform:translateY(-3px)} }
+@keyframes fjbob{ 0%,100%{transform:translateY(0) translateZ(0)} 50%{transform:translateY(-3px) translateZ(8px)} }
 .fj-tok{
   width:40px; height:40px; border-radius:15px;
   background:#fff; border:1px solid rgba(46,42,36,.10);
   display:flex; align-items:center; justify-content:center;
   font-size:20px; position:relative; z-index:2;
-  box-shadow:0 6px 14px rgba(46,42,36,.20), 0 1.5px 3px rgba(46,42,36,.12);
+  box-shadow:0 8px 18px rgba(46,42,36,.22), 0 2px 4px rgba(46,42,36,.14);
   transition:transform .3s ease, box-shadow .3s ease, border-color .3s ease;
+  transform:translateZ(15px);
 }
 /* مؤشّر الدبوس (ذيل صغير تحت الماركر) */
 .fj-tok::after{
@@ -142,16 +162,18 @@
 .fj-vignette{ position:absolute; inset:0; z-index:18; pointer-events:none;
   box-shadow:inset 0 0 0 rgba(0,0,0,0); transition:box-shadow .7s ease; }
 
-/* ===== شريط الحكم (HUD) ===== */
+/* ===== شريط الحكم (HUD) — 3D floating ===== */
 .fj-hud{
-  position:absolute; left:50%; bottom:12px; transform:translateX(-50%) translateY(150%);
+  position:absolute; left:50%; bottom:12px; transform:translateX(-50%) translateY(150%) translateZ(40px);
   width:92%; max-width:540px; background:rgba(255,255,255,.93);
-  -webkit-backdrop-filter:blur(7px); backdrop-filter:blur(7px);
+  -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
   border:1px solid var(--fj-line); border-radius:15px; padding:11px 15px;
   display:flex; align-items:center; gap:13px; z-index:32;
-  box-shadow:0 10px 30px rgba(46,42,36,.22); transition:transform .55s cubic-bezier(.34,1.4,.64,1);
+  box-shadow:0 16px 40px rgba(46,42,36,.24),0 4px 10px rgba(46,42,36,.10);
+  transition:transform .55s cubic-bezier(.34,1.4,.64,1),box-shadow .55s ease;
 }
-.fj-hud.show{ transform:translateX(-50%) translateY(0); }
+.fj-hud.show{ transform:translateX(-50%) translateY(0) translateZ(40px);
+  box-shadow:0 20px 50px rgba(46,42,36,.26),0 6px 14px rgba(46,42,36,.12); }
 .fj-hud-v{ font-size:16px; font-weight:800; padding:7px 13px; border-radius:11px; color:#fff; white-space:nowrap; }
 .fj-hud-meta{ font-size:11.5px; color:var(--fj-char); flex:1; line-height:1.6; }
 .fj-hud-meta b{ color:var(--fj-dteal); }
