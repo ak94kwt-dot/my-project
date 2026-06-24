@@ -180,13 +180,25 @@
 .fj-hud-split{ display:flex; height:8px; border-radius:5px; overflow:hidden; margin-top:5px; border:1px solid var(--fj-line); }
 .fj-hud-split i{ display:block; height:100%; }
 
-/* ===== موبايل ===== */
+/* ===== موبايل — نسطّح عمق المشهد (أداء + ما فيه hover) ===== */
 @media(max-width:600px){
-  .fj-scene{ aspect-ratio:9/12; max-height:none; }
+  .fj-scene{ aspect-ratio:9/12; max-height:none; perspective:none; }
+  .fj-scene:hover{ transform:none; }       /* لا ميلان على اللمس */
+  .fj-basemap{ transform:none; }
   .fj-ava{ width:40px; }
-  .fj-tok{ width:32px; height:32px; font-size:16px; }
+  .fj-tok{ width:32px; height:32px; font-size:16px; transform:none; }
   .fj-name{ font-size:8px; }
   .fj-bubble{ width:130px; font-size:10px; }
   .fj-face{ font-size:18px; top:-16px; }
+  .fj-building{ transform:translate(-50%,-50%); }
   .fj-building svg{ transform:scale(.82); }
+}
+
+/* ===== احترام تقليل الحركة (إتاحة) ===== */
+@media(prefers-reduced-motion:reduce){
+  .fj-ava-inner{ animation:none; }
+  .fj-scene{ perspective:none; }
+  .fj-scene:hover{ transform:none; }
+  .fj-tok,.fj-basemap{ transform:none; }
+  .fj-toast .fj-dot{ animation:none; }
 }

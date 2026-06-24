@@ -217,10 +217,32 @@
   .dw-footer-tag{font-size:14px;color:#A1A1AA;margin-bottom:16px;position:relative;}
   .dw-footer-note{font-size:11.5px;color:#71717A;font-family:var(--mono);position:relative;}
 
-  /* موبايل */
+  /* موبايل — نسطّح الـ3D (ما فيه hover، ونتجنّب jank الإعادة الرسم) */
   @media(max-width:600px){
     .dw-nav{gap:2px;}
     .dw-navlink{display:none;}
+    /* إلغاء العمق ثلاثي الأبعاد على الشاشات الصغيرة: المحتوى يرجع مسطّحاً ومقروءاً */
+    .dw-hero{perspective:none;}
+    .dw-hero::before,.dw-hero::after,.dw-hero-badge,.dw-hero-title,.dw-hero-sub,
+    .dw-cta-lg,.dw-hero-note{transform:none;}
+    .dw-steps,.dw-features{perspective:none;}
+    .dw-step,.dw-feature,.dw-step-num,.dw-step-title,.dw-step-desc,
+    .dw-feature-icon,.dw-feature-title,.dw-feature-desc,
+    .dw-verdict-v,.dw-verdict-r{transform:none;}
+    /* لمسة لطيفة بدل الـtilt: رفع بسيط عند اللمس */
+    .dw-step:active,.dw-feature:active{transform:translateY(-2px);}
+  }
+
+  /* احترام تفضيل تقليل الحركة (إتاحة) — نوقف كل الأنميشن والـ3D */
+  @media(prefers-reduced-motion:reduce){
+    *,*::before,*::after{
+      animation-duration:.001ms!important;animation-iteration-count:1!important;
+      transition-duration:.001ms!important;scroll-behavior:auto!important;
+    }
+    .dw-hero,.dw-hero::before,.dw-hero::after,.dw-hero-badge,.dw-hero-title,
+    .dw-hero-sub,.dw-cta-lg,.dw-hero-note,.dw-step,.dw-feature,.dw-step-num,
+    .dw-step-title,.dw-step-desc,.dw-feature-icon,.dw-feature-title,
+    .dw-feature-desc,.dw-verdict-v,.dw-verdict-r{transform:none!important;perspective:none!important;}
   }
 </style>
 </head>
