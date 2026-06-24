@@ -53,11 +53,19 @@ const NAQISHNA = {
     runtime: "static + 3 دوال سيرفرليس (nodejs)",
     vercelTeam: "team_BdMPEvXh1WlN3Ex1tGMrOWII (slug: ak-s-pr)",
     vercelProject: "prj_Ph0tvPg0oU6jwDitmAfYBxMbNm86",
+    rateLimit: "lib/ratelimit.js — هجين (ذاكرة الآن، يترقّى لـUpstash) على كل /api/*",
+    supabase: {
+      project: "naqishna (ref umxhuuqsoygzcmpnliqb, eu-west-2, مجاني)",
+      url: "https://umxhuuqsoygzcmpnliqb.supabase.co",
+      table: "public.profiles + RLS (كل مستخدم صفّه فقط) — صفر تحذيرات أمنية",
+      client: "db.js (window.Cloud) — مزامنة اختيارية، غير مُفعّلة حتى يبدّل المالك Anonymous sign-ins",
+      docs: "docs/BACKEND.md + supabase/migrations/*.sql"
+    },
     git: {
       devBranch: "claude/keen-noether-m3vjnl",
       deployBranch: "main",
       sync: "الفرعان متزامنان دائماً",
-      lastCommit: "77fdf71"
+      lastCommit: "90791d0+"
     }
   },
 

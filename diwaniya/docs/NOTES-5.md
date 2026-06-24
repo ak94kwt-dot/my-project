@@ -50,8 +50,9 @@
 
 ## ٩) الباكلوگ
 - 🟢 شخصيات SVG مرسومة بدل الإيموجي (M2) · إثراء المجتمعات + نصائح استباقية + streak.
-- 🟢 A3: Supabase + تسجيل دخول + ملف دائم + Rate-limiting + إشعارات.
-- 🟡 معايرة دقّة المحرّك · نطاق أنظف (naqishna.com).
+- ✅ Rate-limiting (lib/ratelimit.js على كل /api/*) · ✅ باكند Supabase حيّ (profiles + RLS، صفر تحذيرات) — راجع docs/BACKEND.md.
+- 🟡 تفعيل المزامنة: المالك يبدّل Anonymous sign-ins + يربط db.js (window.Cloud) · إشعارات.
+- 🟡 معايرة دقّة المحرّك · نطاق أنظف (naqishna.com) · 3D للموبايل مُسطّح + reduced-motion ✅.
 
 ## ١٠) سير العمل
 تطوير على الفرع، دمج/مزامنة مع main، نهاية كل commit: Co-Authored-By + Claude-Session. فحص قبل الرفع: `node --check` + سيرفر محلي + تأكيد deployment READY. آخر commit: `dfb7dac`.
