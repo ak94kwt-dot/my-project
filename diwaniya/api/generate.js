@@ -7,6 +7,7 @@
    ============================================================ */
 
 const { PERSONAS } = require("../engine.js");
+const { enforce } = require("../lib/ratelimit.js");
 
 // خريطة الاسم → (إيموجي/بُعد/قاتم) عشان نكمّل ما ينقص من رد النموذج
 const BY_NAME = {};
@@ -148,6 +149,9 @@ module.exports = async function handler(req, res) {
     res.status(405).json({ error: "method_not_allowed" });
     return;
   }
+
+  // تحديد المعدّل: 20 طلب/دقيقة لكل IP (توقّع مكلف على النموذج)
+  if (!(await enforce(req, res, { bucket: "generate", limit: 20, windowMs: 60000 }))) return;
 
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) {

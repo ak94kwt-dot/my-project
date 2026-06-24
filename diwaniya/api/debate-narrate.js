@@ -6,8 +6,13 @@
    إثراء اختياري: لو ما فيه مفتاح، الواجهة تبقى على النص المحلي.
    ============================================================ */
 
+const { enforce } = require("../lib/ratelimit.js");
+
 module.exports = async function handler(req, res) {
   if (req.method !== "POST") { res.status(405).json({ error: "method_not_allowed" }); return; }
+
+  // تحديد المعدّل: 20 طلب/دقيقة لكل IP
+  if (!(await enforce(req, res, { bucket: "narrate", limit: 20, windowMs: 60000 }))) return;
 
   const key = process.env.ANTHROPIC_API_KEY;
   if (!key) { res.status(503).json({ error: "no_api_key" }); return; }
