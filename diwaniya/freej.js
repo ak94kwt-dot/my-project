@@ -51,119 +51,140 @@
   var GOLD="#B8862F", SAND="#F3EEE3", TEAL="#0E6B54", DTEAL="#0A4537",
       DANGER="#C0392B", SAFE="#1D9E75", WARN="#BA7517", CHAR="#2E2A24", BRICK="#C98A5E";
 
-  // ===== رسومات المباني (SVG مسطّح فاخر) =====
+  // ===== رسومات المباني — مجسمات أيزومترية low-poly بثلاثة أوجه مظللة =====
+  // إسقاط 2:1: المحور الشرقي e=(1,0.5)، الشمالي n=(-1,0.5)، الارتفاع للأعلى.
+  // الإحداثيات تُحسب برمجياً (أدقّ من الرسم اليدوي) لإعطاء «ظلال مخبوزة».
+  function pt(x,y){ return (Math.round(x*10)/10)+","+(Math.round(y*10)/10); }
+  function poly(points, fill, extra){
+    return '<polygon points="'+points.map(function(p){return pt(p[0],p[1]);}).join(" ")+'" fill="'+fill+'"'+(extra||"")+'/>';
+  }
+  // منشور أيزومتري: (fx,fy) ركن المقدّمة السفلي · w شرقاً · d شمالاً · h ارتفاعاً
+  function isoPrism(fx,fy,w,d,h,topC,leftC,rightC){
+    var F=[fx,fy], R=[fx+w,fy+w/2], L=[fx-d,fy+d/2], K=[fx+w-d,fy+w/2+d/2];
+    var F2=[fx,fy-h], R2=[fx+w,fy+w/2-h], L2=[fx-d,fy+d/2-h], K2=[fx+w-d,fy+w/2+d/2-h];
+    return poly([F,R,R2,F2], rightC)+            // الوجه الأيمن (أغمق)
+           poly([F,L,L2,F2], leftC)+             // الوجه الأيسر (متوسّط)
+           poly([F2,R2,K2,L2], topC);            // السطح العلوي (أفتح)
+  }
+  // سقف هرمي أيزومتري فوق منشور بعرض w وعمق d وارتفاع قمّة rh، قمّته على المركز العلوي
+  function isoRoof(fx,fy,w,d,rh,c1,c2){
+    var F2=[fx,fy], R2=[fx+w,fy+w/2], L2=[fx-d,fy+d/2], K2=[fx+w-d,fy+w/2+d/2];
+    var apex=[fx+(w-d)/2, fy+(w+d)/4 - rh];
+    return poly([F2,R2,apex], c2)+poly([R2,K2,apex], c1)+
+           poly([K2,L2,apex], c2)+poly([L2,F2,apex], c1);
+  }
+
   function buildingSVG(key){
     switch(key){
-      case "diwaniya": return ''+
-        '<svg width="118" height="74" viewBox="0 0 118 74">'+
-        '<rect x="6" y="26" width="106" height="40" rx="4" fill="'+DTEAL+'"/>'+
-        '<rect x="6" y="26" width="106" height="9" fill="'+TEAL+'"/>'+
-        '<polygon points="59,4 112,26 6,26" fill="'+GOLD+'"/>'+
-        '<polygon points="59,11 100,26 18,26" fill="#caa24f"/>'+
-        arches(16,40,5,18,22,"#0c5743")+
-        '<rect x="0" y="66" width="118" height="6" rx="3" fill="#d8c39a"/>'+
+      case "diwaniya": return ''+   // الديوانية: مجسم زجاجي مركزي + قبّة ذهبية
+        '<svg width="132" height="104" viewBox="0 0 132 104">'+
+        // ظلّ أرضي مخبوز
+        poly([[66,84],[104,103],[66,122],[28,103]], "rgba(46,42,36,.16)", ' opacity=".5"')+
+        isoPrism(66,84,42,30,40, "#15705a","#0c4f3f","#0a3f33")+
+        // ألواح زجاج (خطوط فاتحة على السطح والأوجه)
+        '<g stroke="#3f9f86" stroke-width="1" opacity=".55">'+
+          '<line x1="66" y1="44" x2="108" y2="65"/><line x1="66" y1="44" x2="24" y2="65"/>'+
+          '<line x1="80" y1="51" x2="80" y2="79"/><line x1="52" y1="51" x2="52" y2="79"/>'+
+        '</g>'+
+        // قبّة ذهبية + هلال
+        '<ellipse cx="66" cy="40" rx="15" ry="9" fill="'+GOLD+'"/>'+
+        '<path d="M58 40 a9 9 0 0 1 16 0 z" fill="#caa24f"/>'+
+        '<circle cx="66" cy="27" r="3" fill="'+GOLD+'"/>'+
         '</svg>';
-      case "mosque": return ''+
-        '<svg width="92" height="78" viewBox="0 0 92 78">'+
-        '<rect x="10" y="34" width="62" height="36" rx="4" fill="#f4efe3" stroke="'+TEAL+'" stroke-width="1.5"/>'+
-        '<path d="M41 14 c-14 4 -16 20 0 20 16 0 14 -16 0 -20 z" fill="'+TEAL+'"/>'+
-        '<rect x="39" y="6" width="4" height="9" fill="'+GOLD+'"/><circle cx="41" cy="5" r="3" fill="'+GOLD+'"/>'+
-        '<rect x="74" y="20" width="9" height="50" rx="2" fill="#efe8d8" stroke="'+TEAL+'" stroke-width="1.2"/>'+
-        '<rect x="74" y="20" width="9" height="7" fill="'+TEAL+'"/><circle cx="78.5" cy="17" r="3" fill="'+GOLD+'"/>'+
-        arches(16,46,4,12,18,TEAL)+
-        '<rect x="2" y="70" width="88" height="6" rx="3" fill="#d8c39a"/>'+
+      case "mosque": return ''+   // المسجد: مجسم + قبّة + مئذنة
+        '<svg width="116" height="104" viewBox="0 0 116 104">'+
+        poly([[52,80],[86,97],[52,114],[18,97]], "rgba(46,42,36,.15)", ' opacity=".5"')+
+        isoPrism(52,80,32,26,24, "#f3eee1","#d9d0bd","#cbc1ab")+
+        // قبّة
+        '<ellipse cx="52" cy="56" rx="14" ry="9" fill="'+TEAL+'"/>'+
+        '<path d="M45 56 a7 7 0 0 1 14 0 z" fill="#0c5743"/>'+
+        '<rect x="50.5" y="44" width="3" height="9" fill="'+GOLD+'"/><circle cx="52" cy="43" r="2.6" fill="'+GOLD+'"/>'+
+        // مئذنة (منشور رفيع)
+        isoPrism(92,74,7,7,42, "#efe8d8","#dcd3c0","#cfc6b1")+
+        '<rect x="88.5" y="30" width="7" height="5" fill="'+TEAL+'"/><circle cx="92" cy="28" r="2.4" fill="'+GOLD+'"/>'+
         '</svg>';
-      case "police": return ''+
-        '<svg width="86" height="70" viewBox="0 0 86 70">'+
-        '<rect x="8" y="22" width="70" height="42" rx="3" fill="#e9eef0" stroke="#4a6b73" stroke-width="1.5"/>'+
-        '<rect x="8" y="22" width="70" height="11" fill="#33525a"/>'+
-        '<text x="43" y="31" font-size="9" fill="#fff" text-anchor="middle" font-family="sans-serif">مخفر</text>'+
-        windows(18,40,3,12,16,"#9fc0c8")+
-        '<rect x="38" y="50" width="12" height="14" fill="#33525a"/>'+
-        '<rect x="40" y="6" width="2.5" height="16" fill="#7a7066"/>'+
-        '<polygon points="42,6 56,10 42,14" fill="'+DANGER+'"/>'+
-        '<rect x="2" y="64" width="82" height="6" rx="3" fill="#cfd7d4"/>'+
+      case "police": return ''+   // المخفر: مجسم رمادي + سارية وعلم
+        '<svg width="110" height="98" viewBox="0 0 110 98">'+
+        poly([[50,76],[84,93],[50,110],[16,93]], "rgba(46,42,36,.15)", ' opacity=".5"')+
+        isoPrism(50,76,34,24,22, "#e7edee","#c2ced0","#b3c0c2")+
+        // شريط علوي داكن
+        poly([[50,54],[84,71],[50,88],[16,71]], "#33525a", ' opacity=".9"')+
+        // سارية + علم
+        '<rect x="84" y="34" width="2.4" height="30" fill="#7a7066"/>'+
+        poly([[86,34],[99,38],[86,42]], DANGER)+
         '</svg>';
-      case "market": return ''+
-        '<svg width="96" height="66" viewBox="0 0 96 66">'+
-        '<rect x="10" y="30" width="76" height="30" rx="3" fill="#efe6d2" stroke="'+WARN+'" stroke-width="1.3"/>'+
-        awning(10,22,76,GOLD)+
-        '<rect x="20" y="40" width="14" height="20" fill="#b98b4a"/>'+
-        '<rect x="42" y="40" width="14" height="20" fill="#b98b4a"/>'+
-        '<rect x="64" y="40" width="14" height="20" fill="#b98b4a"/>'+
-        '<rect x="2" y="60" width="92" height="6" rx="3" fill="#d8c39a"/>'+
+      case "market": return ''+   // السوق: مجسم منخفض + مظلّة مخطّطة
+        '<svg width="116" height="92" viewBox="0 0 116 92">'+
+        poly([[54,70],[92,89],[54,108],[16,89]], "rgba(46,42,36,.14)", ' opacity=".5"')+
+        isoPrism(54,72,38,28,16, "#efe6d2","#d6c8a8","#c9ba98")+
+        // مظلّة مخطّطة (سطح مائل ذهبي/أبيض)
+        '<g>'+poly([[54,52],[92,71],[54,90],[16,71]], GOLD)+
+        '<g opacity=".5">'+poly([[54,52],[73,61.5],[54,71],[35,61.5]], "#fff")+
+        poly([[73,61.5],[92,71],[73,80.5],[54,71]], "#fff")+'</g></g>'+
         '</svg>';
-      case "houses": return ''+
-        '<svg width="100" height="66" viewBox="0 0 100 66">'+
-        house(4,26,34,SAND,BRICK)+ house(36,18,40,"#fbf6ec",TEAL)+ house(72,30,26,SAND,GOLD)+
-        '<rect x="0" y="60" width="100" height="6" rx="3" fill="#d8c39a"/>'+
+      case "houses": return ''+   // البيوت: ٣ مجسمات بسقوف هرمية
+        '<svg width="124" height="92" viewBox="0 0 124 92">'+
+        poly([[60,66],[100,86],[60,106],[20,86]], "rgba(46,42,36,.13)", ' opacity=".45"')+
+        isoPrism(40,66,22,18,16, SAND,"#e6dcc6","#d9cdb2")+ isoRoof(40,50,22,18,9, BRICK,"#b97f54")+
+        isoPrism(74,72,20,16,20, "#fbf6ec","#e9e0cd","#dcd2bb")+ isoRoof(74,52,20,16,9, TEAL,"#0c5743")+
+        isoPrism(100,70,16,14,13, SAND,"#e6dcc6","#d9cdb2")+ isoRoof(100,57,16,14,7, GOLD,"#caa24f")+
         '</svg>';
-      case "gate": return ''+
-        '<svg width="84" height="46" viewBox="0 0 84 46">'+
-        '<rect x="6" y="14" width="12" height="30" rx="2" fill="'+DTEAL+'"/>'+
-        '<rect x="66" y="14" width="12" height="30" rx="2" fill="'+DTEAL+'"/>'+
-        '<path d="M6 16 Q42 -8 78 16" fill="none" stroke="'+GOLD+'" stroke-width="6"/>'+
-        '<circle cx="42" cy="5" r="3.5" fill="'+GOLD+'"/>'+
+      case "gate": return ''+   // البوابة: عمودان أيزومتريان + قوس ذهبي
+        '<svg width="104" height="74" viewBox="0 0 104 74">'+
+        isoPrism(22,58,8,8,34, DTEAL,"#083b30","#062f26")+
+        isoPrism(86,46,8,8,34, DTEAL,"#083b30","#062f26")+
+        '<path d="M22 26 Q54 -2 86 14" fill="none" stroke="'+GOLD+'" stroke-width="5"/>'+
+        '<circle cx="54" cy="8" r="3.4" fill="'+GOLD+'"/>'+
         '</svg>';
     }
     return "";
   }
-  function arches(x,y,n,w,h,fill){
-    var s="", gap=(w+4); for(var i=0;i<n;i++){ var cx=x+i*gap;
-      s+='<path d="M'+cx+' '+(y+h)+' v-'+(h-w/2)+' a'+(w/2)+' '+(w/2)+' 0 0 1 '+w+' 0 v'+(h-w/2)+' z" fill="'+fill+'"/>'; }
-    return s;
-  }
-  function windows(x,y,n,w,h,fill){
-    var s="", gap=(w+7); for(var i=0;i<n;i++){ s+='<rect x="'+(x+i*gap)+'" y="'+y+'" width="'+w+'" height="'+h+'" rx="1.5" fill="'+fill+'"/>'; }
-    return s;
-  }
-  function awning(x,y,w,fill){
-    var s='<rect x="'+x+'" y="'+y+'" width="'+w+'" height="9" fill="'+fill+'"/>', n=Math.floor(w/12);
-    for(var i=0;i<n;i++){ if(i%2===0) s+='<rect x="'+(x+i*12)+'" y="'+y+'" width="12" height="9" fill="#fff" opacity=".55"/>'; }
-    return s;
-  }
-  function house(x,w,h,wall,roof){
-    return '<rect x="'+x+'" y="'+(60-h)+'" width="'+w+'" height="'+h+'" fill="'+wall+'" stroke="'+roof+'" stroke-width="1.2"/>'+
-           '<polygon points="'+(x-2)+','+(60-h)+' '+(x+w/2)+','+(60-h-12)+' '+(x+w+2)+','+(60-h)+'" fill="'+roof+'"/>'+
-           '<rect x="'+(x+w/2-4)+'" y="'+(60-12)+'" width="8" height="12" fill="'+roof+'" opacity=".7"/>';
-  }
 
   // ===== الحالة الداخلية =====
-  var scene=null, vignette=null, hud=null, toast=null;
+  var scene=null, vignette=null, hud=null, toast=null, splines=null;
   var avaEls={};       // id -> element
   var bubbleEls=[];    // فقاعات الجولة الحالية
   var timers=[];       // مؤقتات الجولة (للإلغاء)
-  var mounted=false;
+  var mounted=false, focusedId=null;
 
   function clearTimers(){ timers.forEach(clearTimeout); timers=[]; }
   function later(fn,ms){ var t=setTimeout(fn,ms); timers.push(t); return t; }
 
-  // ===== طبقة الخريطة (شوارع + ساحة + مسطّحات خضراء + ماء) =====
+  // ===== طبقة الأرض الأيزومترية (شبكة معيّنات + ساحة + شوارع + حدائق + ماء) =====
   function mapBaseSVG(){
-    var land="#EFE9DB", road="#E4D7BD", roadc="#F4ECDA", plaza="#F4EEE0", ring="#DFD1B4",
-        park="#CFE0BE", water="#B9D8D0", blk="#E9E0CD";
-    var spokes='<path d="M80 55 L80 11"/>'+
-               '<path d="M80 55 Q58 40 34 25"/>'+
-               '<path d="M80 55 Q108 40 129 24"/>'+
-               '<path d="M80 55 Q55 71 34 81"/>'+
-               '<path d="M80 55 Q106 71 126 81"/>'+
-               '<path d="M34 25 Q80 6 129 24"/>';
+    var land="#FAF5EB", land2="#F3EBD9", grid="#EAddc4", road="#E4D7BD", roadc="#FBF4E4",
+        plaza="#F5EFE1", ring="#DFCFAE", park="#CFE0BE", park2="#C0D6AC", water="#BCDAD2";
+    // شوارع من الساحة (80,55) لكل حيّ — بميل أيزومتري
+    var spokes='<path d="M80 55 L80 12"/>'+
+               '<path d="M80 55 L35 26"/>'+
+               '<path d="M80 55 L129 24"/>'+
+               '<path d="M80 55 L35 80"/>'+
+               '<path d="M80 55 L125 80"/>';
+    // شبكة معيّنات أيزومترية خفيفة (ميل ±0.5)
+    var g="";
+    for(var i=-8;i<=16;i++){ var o=i*16;
+      g+='<line x1="'+(o)+'" y1="'+(0)+'" x2="'+(o+80)+'" y2="100"/>';
+      g+='<line x1="'+(o)+'" y1="'+(0)+'" x2="'+(o-80)+'" y2="100"/>';
+    }
     return ''+
     '<svg viewBox="0 0 160 100" preserveAspectRatio="none" width="100%" height="100%">'+
       '<rect width="160" height="100" fill="'+land+'"/>'+
-      '<ellipse cx="27" cy="17" rx="24" ry="14" fill="'+park+'" opacity=".5"/>'+
-      '<ellipse cx="147" cy="93" rx="20" ry="12" fill="'+park+'" opacity=".4"/>'+
-      '<path d="M0 100 Q22 84 10 68 Q3 60 0 62 Z" fill="'+water+'" opacity=".55"/>'+
-      '<g fill="'+blk+'" opacity=".5">'+
-        '<rect x="6" y="40" width="14" height="10" rx="3"/>'+
-        '<rect x="140" y="45" width="14" height="11" rx="3"/>'+
-        '<rect x="117" y="61" width="12" height="9" rx="3"/>'+
-        '<rect x="45" y="61" width="12" height="9" rx="3"/>'+
-      '</g>'+
-      '<g fill="none" stroke="'+road+'" stroke-width="7.5" stroke-linecap="round" stroke-linejoin="round">'+spokes+'</g>'+
-      '<g fill="none" stroke="'+roadc+'" stroke-width="2.4" stroke-linecap="round" stroke-dasharray="0.1 5">'+spokes+'</g>'+
-      '<circle cx="80" cy="55" r="16" fill="'+plaza+'" stroke="'+ring+'" stroke-width="2"/>'+
-      '<circle cx="80" cy="55" r="5.5" fill="'+park+'" opacity=".7"/>'+
+      // تموّج لوني خفيف بالأرض
+      '<ellipse cx="80" cy="55" rx="92" ry="60" fill="'+land2+'" opacity=".5"/>'+
+      // شبكة المعيّنات
+      '<g stroke="'+grid+'" stroke-width=".5" opacity=".5">'+g+'</g>'+
+      // حدائق (معيّنات خضراء)
+      poly([[30,16],[46,24],[30,32],[14,24]], park, ' opacity=".7"')+
+      poly([[140,86],[154,93],[140,100],[126,93]], park, ' opacity=".6"')+
+      poly([[126,40],[138,46],[126,52],[114,46]], park2, ' opacity=".55"')+
+      // مسطّح مائي (ركن)
+      '<path d="M0 100 Q24 86 12 70 Q5 62 0 64 Z" fill="'+water+'" opacity=".6"/>'+
+      // الشوارع (طبقة سفلية عريضة + خطّ مركزي منقّط)
+      '<g fill="none" stroke="'+road+'" stroke-width="7" stroke-linecap="round" stroke-linejoin="round">'+spokes+'</g>'+
+      '<g fill="none" stroke="'+roadc+'" stroke-width="2.2" stroke-linecap="round" stroke-dasharray="0.1 5">'+spokes+'</g>'+
+      // الساحة المركزية (معيّن أيزومتري + حلقة + قلب أخضر)
+      poly([[80,40],[103,55],[80,70],[57,55]], plaza, ' stroke="'+ring+'" stroke-width="1.6"')+
+      poly([[80,48],[92,55],[80,62],[68,55]], park, ' opacity=".6"')+
     '</svg>';
   }
 
@@ -175,7 +196,15 @@
     var basemap = el("div",{class:"fj-basemap"}); basemap.innerHTML = mapBaseSVG();
     scene.appendChild(basemap);
 
+    // طبقة خطوط العدوى (SVG overlay بإحداثيات 0..100 تطابق نسب المواقع)
+    splines = el("div",{class:"fj-splines"});
+    splines.innerHTML = '<svg viewBox="0 0 100 100" preserveAspectRatio="none" width="100%" height="100%"></svg>';
+    scene.appendChild(splines);
+
     vignette = el("div",{class:"fj-vignette"}); scene.appendChild(vignette);
+
+    // نقر الخلفية يلغي التركيز
+    scene.addEventListener("click", function(ev){ if(ev.target===scene || ev.target===basemap) focusOff(); });
 
     BUILDINGS.forEach(function(b){
       var bd = el("div",{class:"fj-building", "data-key":b.key,
@@ -195,6 +224,7 @@
       inner.appendChild(el("div",{class:"fj-shadow"}));
       inner.appendChild(el("div",{class:"fj-name"}, p.name));
       a.appendChild(inner);
+      (function(id){ a.addEventListener("click", function(ev){ ev.stopPropagation(); focusOn(id); }); })(p.id);
       scene.appendChild(a);
       avaEls[p.id]=a;
     });
@@ -339,6 +369,7 @@
       var adjusted = computeAdjusted(result, sim.finalMoods);
       adjusted.analysis = buildAnalysis(ids, seed, sim, darkSet);
       showVerdict(adjusted);
+      drawSplines(ids, sim);                         // خطوط «منو أثّر على منو»
       if(onComplete) onComplete(adjusted);
     }, endAt);
   }
@@ -526,11 +557,63 @@
     }
   }
 
+  // ===== التركيز بالنقر (تكبير ناعم نحو الشخصية + تعتيم الباقي) =====
+  function pctNum(v){ return parseFloat(v)||50; }
+  function focusOn(id){
+    var a=avaEls[id]; if(!a||!scene) return;
+    if(focusedId===id){ focusOff(); return; }
+    focusedId=id;
+    scene.style.transformOrigin = pctNum(a.style.left)+"% "+pctNum(a.style.top)+"%";
+    scene.style.transform = "scale(1.5)";
+    scene.classList.add("fj-zoom");
+    PERSONAS.forEach(function(p){ var e=avaEls[p.id]; if(e) e.classList.toggle("fj-focus", p.id===id); });
+  }
+  function focusOff(){
+    if(!scene) return;
+    focusedId=null;
+    scene.style.transform=""; scene.style.transformOrigin="";
+    scene.classList.remove("fj-zoom");
+    scene.querySelectorAll(".fj-ava.fj-focus").forEach(function(e){ e.classList.remove("fj-focus"); });
+  }
+
+  // ===== خطوط العدوى (منو أثّر على منو) =====
+  function svgEl(name, attrs){
+    var e=document.createElementNS("http://www.w3.org/2000/svg", name);
+    if(attrs) Object.keys(attrs).forEach(function(k){ e.setAttribute(k, attrs[k]); });
+    return e;
+  }
+  function clearSplines(){
+    if(!splines) return; var svg=splines.querySelector("svg"); if(!svg) return;
+    while(svg.firstChild) svg.removeChild(svg.firstChild);
+  }
+  function drawSplines(ids, sim){
+    if(!splines) return; var svg=splines.querySelector("svg"); if(!svg) return;
+    clearSplines();
+    ids.forEach(function(id,i){
+      var inf=sim.infl[i], topId=null, tw=0;
+      Object.keys(inf).forEach(function(cid){ if(inf[cid]>tw){ tw=inf[cid]; topId=cid; } });
+      if(!topId) return;
+      var a=avaEls[id], b=avaEls[topId]; if(!a||!b) return;
+      var x1=pctNum(b.style.left), y1=pctNum(b.style.top);
+      var x2=pctNum(a.style.left), y2=pctNum(a.style.top);
+      var mx=(x1+x2)/2, my=(y1+y2)/2 - 9;
+      var m=sim.finalMoods[i];
+      var col = m<=-0.3?DANGER : (m>=0.5?SAFE:GOLD);
+      svg.appendChild(svgEl("path",{ d:"M"+x1+" "+y1+" Q"+mx+" "+my+" "+x2+" "+y2,
+        fill:"none", stroke:col, "stroke-width":"0.55", "stroke-dasharray":"0.6 1.9",
+        "stroke-linecap":"round", opacity:"0.7", "class":"fj-spline" }));
+      svg.appendChild(svgEl("circle",{ cx:x2, cy:y2, r:"0.9", fill:col, opacity:"0.85" }));
+    });
+    splines.classList.add("show");
+  }
+
   // ===== إرجاع المشهد لوضع السكون =====
   function reset(soft){
     clearTimers();
     bubbleEls.forEach(function(b){ if(b.parentNode) b.parentNode.removeChild(b); });
     bubbleEls=[];
+    clearSplines(); if(splines) splines.classList.remove("show");
+    focusOff();
     if(hud){ hud.classList.remove("show"); }
     if(vignette){ vignette.style.boxShadow="inset 0 0 0 rgba(0,0,0,0)"; }
     unlightBuildings();

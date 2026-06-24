@@ -180,6 +180,45 @@
 .fj-hud-split{ display:flex; height:8px; border-radius:5px; overflow:hidden; margin-top:5px; border:1px solid var(--fj-line); }
 .fj-hud-split i{ display:block; height:100%; }
 
+/* ===== خطوط العدوى (منو أثّر على منو) ===== */
+.fj-splines{
+  position:absolute; inset:0; z-index:3; pointer-events:none;
+  opacity:0; transition:opacity .5s ease;
+}
+.fj-splines.show{ opacity:1; }
+.fj-splines svg{ display:block; width:100%; height:100%; overflow:visible; }
+.fj-spline{ animation:fjflow 1.1s linear infinite; }
+@keyframes fjflow{ to{ stroke-dashoffset:-2.5; } }
+
+/* ===== التركيز بالنقر (تكبير + تعتيم الباقي) ===== */
+.fj-ava{ cursor:pointer; }
+.fj-building{ cursor:pointer; }
+.fj-scene.fj-zoom .fj-ava:not(.fj-focus){ opacity:.22; filter:grayscale(.4); }
+.fj-scene.fj-zoom .fj-building{ opacity:.4; }
+.fj-ava.fj-focus{ z-index:40; }
+.fj-ava.fj-focus .fj-tok{
+  transform:translateZ(26px) scale(1.18);
+  box-shadow:0 14px 26px rgba(46,42,36,.34), 0 0 22px rgba(184,134,47,.5);
+}
+.fj-ava.fj-focus .fj-name{ font-weight:700; background:#fff; }
+
+/* ===== رفع + توهّج دافئ عند الهوفر ===== */
+.fj-ava:hover{ z-index:24; }
+.fj-ava:hover .fj-tok{
+  transform:translateZ(24px) translateY(-2px) scale(1.1);
+  box-shadow:0 12px 22px rgba(46,42,36,.3), 0 0 18px rgba(184,134,47,.42);
+}
+.fj-building:hover{ transform:translate(-50%,-50%) translateZ(22px) scale(1.07); }
+.fj-building:hover svg{ filter:drop-shadow(0 0 16px rgba(184,134,47,.55)) drop-shadow(0 10px 14px rgba(46,42,36,.2)); }
+
+/* ===== توهّج مزاجي أنعم (حلقة حول الدبوس) ===== */
+.fj-ava.m-angry .fj-tok{ box-shadow:0 8px 16px rgba(46,42,36,.2), 0 0 16px rgba(239,68,68,.6); border-color:#ef4444; }
+.fj-ava.m-happy .fj-tok{ box-shadow:0 8px 16px rgba(46,42,36,.2), 0 0 16px rgba(16,185,129,.55); border-color:#10b981; }
+.fj-ava.m-neu   .fj-tok{ box-shadow:0 8px 16px rgba(46,42,36,.2), 0 0 13px rgba(245,158,11,.45); border-color:#f59e0b; }
+
+/* ظلّ أرضي أنعم (إحساس أيزومتري) */
+.fj-shadow{ width:24px; height:6px; background:rgba(46,42,36,.18); filter:blur(2px); margin-top:5px; }
+
 /* ===== موبايل — نسطّح عمق المشهد (أداء + ما فيه hover) ===== */
 @media(max-width:600px){
   .fj-scene{ aspect-ratio:9/12; max-height:none; perspective:none; }
